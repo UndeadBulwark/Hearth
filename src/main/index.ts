@@ -1,0 +1,274 @@
+import { app, shell, BrowserWindow, protocol, net, Tray, Menu, nativeImage } from "electron"
+import { join } from "path"
+import { electronApp, optimizer, is } from "@electron-toolkit/utils"
+import { autoUpdater } from "electron-updater"
+import Logger from "electron-log"
+import { pathToFileURL } from "url"
+
+const customUserDataPath = join(app.getPath("appData"), "VSLauncher")
+app.setPath("userData", customUserDataPath)
+
+import { ensureConfig, getConfig, saveConfig } from "@src/config/configManager"
+import { getShouldPreventClose } from "@src/utils/shouldPreventClose"
+import { setMainWindowRef, cachedMinimizeToTray, setCachedMinimizeToTray } from "@src/utils/windowRef"
+import icon from "../../resources/icon.png?asset"
+import { logMessage } from "@src/utils/logManager"
+import { IPC_CHANNELS } from "@src/ipc/ipcChannels"
+
+import "@src/ipc"
+import { clearTimeout, setTimeout } from "timers"
+
+autoUpdater.logger = Logger
+autoUpdater.logger.info("Logger configured for auto-updater")
+
+Logger.transports.file.resolvePathFn = (variables, message): string => {
+  const logsPath = join(variables.userData, "Logs")
+  if (!message) return join(logsPath, "default.log")
+  return join(logsPath, `${message.level}.log`)
+}
+
+let mainWindow: BrowserWindow
+let tray: Tray | null = null
+let isQuitting = false
+
+function createTray(): void {
+  try {
+    let trayIconPath = icon
+    if (trayIconPath.startsWith("data:") || trayIconPath.startsWith("http")) {
+      trayIconPath = join(app.getAppPath(), "resources", "icon.png")
+    }
+    const trayIcon = nativeImage.createFromPath(trayIconPath)
+    tray = new Tray(trayIcon)
+    tray.setToolTip("VS Launcher")
+
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: "Show VS Launcher",
+        click: () => {
+          if (mainWindow) {
+            mainWindow.show()
+            mainWindow.focus()
+          }
+        }
+      },
+      { type: "separator" },
+      {
+        label: "Quit",
+        click: () => {
+          isQuitting = true
+          app.quit()
+        }
+      }
+    ])
+
+    tray.setContextMenu(contextMenu)
+
+    tray.on("double-click", () => {
+      if (mainWindow) {
+        mainWindow.show()
+        mainWindow.focus()
+      }
+    })
+
+    logMessage("info", `[back] [index] [main/index.ts] [createTray] System tray created. icon=${trayIconPath} isEmpty=${trayIcon.isEmpty()}`)
+  } catch (err) {
+    logMessage("error", `[back] [index] [main/index.ts] [createTray] Failed to create tray: ${err}`)
+  }
+}
+
+function destroyTray(): void {
+  if (tray) {
+    tray.destroy()
+    tray = null
+  }
+}
+
+function createWindow(): void {
+  mainWindow = new BrowserWindow({
+    center: true,
+    width: 1280,
+    height: 720,
+    title: `VS Launcher - ${app.getVersion()}`,
+    show: false,
+    autoHideMenuBar: true,
+    fullscreenable: false,
+    minWidth: 1024,
+    minHeight: 600,
+    icon: icon,
+    ...(process.platform === "linux" ? { icon } : {}),
+    webPreferences: {
+      sandbox: false,
+      webviewTag: true,
+      preload: join(__dirname, "../preload/index.js")
+    }
+  })
+
+  setMainWindowRef(mainWindow)
+
+  mainWindow.on("ready-to-show", async () => {
+    logMessage("info", "[back] [index] [main/index.ts] [createWindow] Main window ready to show. Opening.")
+
+    const config = await getConfig()
+    const oldWindowsState = config.window
+
+    mainWindow.setBounds({ width: oldWindowsState.width, height: oldWindowsState.height }, true)
+    mainWindow.setPosition(oldWindowsState.x, oldWindowsState.y, true)
+    if (oldWindowsState.maximized) mainWindow.maximize()
+
+    mainWindow.show()
+  })
+
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: "deny" }
+  })
+
+  let savePositionTimeout: NodeJS.Timeout | null = null
+
+  function setSavePositionTimeout(): void {
+    if (savePositionTimeout) clearTimeout(savePositionTimeout)
+
+    savePositionTimeout = setTimeout(() => {
+      saveCurrentWindowState()
+    }, 1_000)
+  }
+
+  mainWindow.on("resize", () => {
+    setSavePositionTimeout()
+  })
+
+  mainWindow.on("move", () => {
+    setSavePositionTimeout()
+  })
+
+  mainWindow.on("close", (e) => {
+    if (getShouldPreventClose()) {
+      e.preventDefault()
+      mainWindow.webContents.send(IPC_CHANNELS.UTILS.PREVENTED_APP_CLOSE)
+      logMessage("info", "[back] [index] [main/index.ts] [createWindow] Main window prevented from closing.")
+      return false
+    }
+
+    if (!isQuitting && cachedMinimizeToTray) {
+      e.preventDefault()
+      mainWindow.hide()
+      logMessage("info", "[back] [index] [main/index.ts] [createWindow] Main window hidden to tray.")
+      return false
+    }
+
+    logMessage("info", "[back] [index] [main/index.ts] [createWindow] Main window closing.")
+    return true
+  })
+
+  // HMR for renderer base on electron-vite cli. Load the remote URL for development or the local html file for production.
+  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
+    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"])
+  } else {
+    mainWindow.loadFile(join(__dirname, "../renderer/index.html"))
+  }
+}
+
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) app.quit()
+
+// This method will be called when Electron has finished initialization and is ready to create browser windows. Some APIs can only be used after this event occurs.
+app.whenReady().then(async () => {
+  logMessage("info", "[back] [index] [main/index.ts] [whenReady] Electron ready.")
+
+  // Handler for mod icons
+  protocol.handle("cachemodimg", (req) => {
+    const srcPath = join(app.getPath("userData"), "Cache", "Images", "Mods")
+    const reqURL = new URL(req.url)
+    const fileToPathURL = pathToFileURL(join(srcPath, reqURL.pathname)).toString()
+    return net.fetch(fileToPathURL)
+  })
+
+  // Handler for custom icons
+  protocol.handle("icons", (req) => {
+    const srcPath = join(app.getPath("userData"), "Icons")
+    const reqURL = new URL(req.url)
+    const fileToPathURL = pathToFileURL(join(srcPath, reqURL.pathname)).toString()
+    return net.fetch(fileToPathURL)
+  })
+
+  await ensureConfig()
+  const initialConfig = await getConfig()
+  setCachedMinimizeToTray(initialConfig.minimizeToTray ?? false)
+  logMessage("info", `[back] [index] [main/index.ts] [whenReady] cachedMinimizeToTray initialized to ${initialConfig.minimizeToTray ?? false}`)
+
+  // Set app user model id for windows
+  electronApp.setAppUserModelId("xyz.xurxomf")
+
+  // Default open or close DevTools by F12 in development and ignore CommandOrControl + R in production.
+  app.on("browser-window-created", (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
+
+  createWindow()
+  createTray()
+
+  if (process.env["UPDATE"] != "false") {
+    // Check for updates
+    autoUpdater.checkForUpdatesAndNotify()
+
+    // If there is an update available send an event to the client.
+    autoUpdater.on("update-available", () => {
+      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATER.UPDATE_AVAILABLE)
+    })
+
+    // If there is an update downloaded send an event to the client.
+    autoUpdater.on("update-downloaded", () => {
+      mainWindow.webContents.send(IPC_CHANNELS.APP_UPDATER.UPDATE_DOWNLOADED)
+    })
+  }
+
+  app.on("activate", function () {
+    // On macOS it's common to re-create a window in the app when the dock icon is clicked and there are no other windows open.
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+// Quit when all windows are closed, except on macOS.
+app.on("window-all-closed", () => {
+  if (getShouldPreventClose()) {
+    mainWindow.webContents.send(IPC_CHANNELS.UTILS.PREVENTED_APP_CLOSE)
+    return logMessage("info", "[back] [index] [main/index.ts] [window-all-closed] Main window prevented from closing.")
+  }
+
+  logMessage("info", "[back] [index] [main/index.ts] [window-all-closed] All windows closed.")
+  if (process.platform !== "darwin") {
+    app.quit()
+  }
+})
+
+app.on("will-quit", () => {
+  destroyTray()
+})
+
+app.on("second-instance", () => {
+  logMessage("info", "[back] [index] [main/index.ts] [second-instance] Another instance launched. Showing window.")
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+  }
+})
+
+async function saveCurrentWindowState(): Promise<void> {
+  const { width, height } = mainWindow.getBounds()
+  const [x, y] = mainWindow.getPosition()
+  const maximized = mainWindow.isMaximized()
+
+  const config = await getConfig()
+
+  config.window = {
+    width,
+    height,
+    x,
+    y,
+    maximized
+  }
+
+  saveConfig(config)
+}

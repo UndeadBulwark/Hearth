@@ -1,0 +1,77 @@
+import { ElectronAPI } from "@electron-toolkit/preload"
+
+declare global {
+  type ProgressCallback = {
+    (event: Electron.IpcRendererEvent, id: string, progress: number): void
+  }
+
+  type BridgeAPI = {
+    utils: {
+      getAppVersion: () => Promise<string>
+      getOs: () => Promise<NodeJS.Platform>
+      logMessage: (mode: ErrorTypes, message: string) => void
+      setPreventAppClose: (action: "add" | "remove", id: string, desc: string) => void
+      openOnBrowser: (url: string) => void
+      selectFolderDialog: (options?: { type?: "file" | "folder"; mode?: "single" | "multi"; extensions?: string[] }) => Promise<string[]>
+      onPreventedAppClose: (callback: (event: Electron.IpcRendererEvent) => void) => void
+    }
+    appUpdater: {
+      onUpdateAvailable: (callback) => void
+      onUpdateDownloaded: (callback) => void
+      updateAndRestart: () => void
+    }
+    configManager: {
+      getConfig: () => Promise<ConfigType>
+      saveConfig: (configJson: ConfigType) => Promise<boolean>
+    }
+    modsManager: {
+      getInstalledMods: (path: string) => Promise<{ mods: InstalledModType[]; errors: ErrorInstalledModType[] }>
+    }
+    pathsManager: {
+      getCurrentUserDataPath: () => Promise<string>
+      formatPath: (parts: string[]) => Promise<string>
+      removeFileFromPath(path: string): Promise<string>
+      deletePath: (path: string) => Promise<boolean>
+      checkPathEmpty: (path: string) => Promise<boolean>
+      checkPathExists: (path: string) => Promise<boolean>
+      ensurePathExists: (path: string) => Promise<boolean>
+      openPathOnFileExplorer: (path: string) => Promise<string>
+      downloadOnPath: (id: string, url: string, outputPath: string, fileName: string) => Promise<string>
+      extractOnPath: (id: string, filePath: string, outputPath: string, deleteZip: boolean) => Promise<boolean>
+      compressOnPath: (id: string, inputPath: string, outputPath: string, outputFileName: string, compressionLevel?: number) => Promise<boolean>
+      onDownloadProgress: (callback: ProgressCallback) => void
+      onExtractProgress: (callback: ProgressCallback) => void
+      onCompressProgress: (callback: ProgressCallback) => void
+      changePerms: (paths: string[], perms: number) => void
+      copyToIcons: (path: string, name: string) => Promise<{ status: true; file: string } | { status: false }>
+    }
+    gameManager: {
+      executeGame: (version: GameVersionType, installation: InstallationType, account: AccountType | null, dotnetEnv?: Record<string, string>) => Promise<boolean>
+      lookForAGameVersion: (path: string) => Promise<{ exists: boolean; installedGameVersion: string | undefined }>
+    }
+    netManager: {
+      queryURL: (url: string) => Promise<string>
+      postUrl: (url: string, body: { email: string; password: string; twofacode?: string; preLoginToken?: string }) => Promise<object>
+    }
+    windowManager: {
+      hide: () => void
+      show: () => void
+      closeToTray: () => void
+    }
+    dotnetManager: {
+      getRequiredRuntime: (vsVersion: string) => Promise<string | null>
+      isRuntimeCached: (runtimeId: string) => Promise<boolean>
+      downloadRuntime: (runtimeId: string) => Promise<boolean>
+      getDotnetEnv: (runtimeId: string) => Promise<Record<string, string> | null>
+      getRuntimeSize: (runtimeId: string) => Promise<number>
+      onDownloadProgress: (callback: (event: Electron.IpcRendererEvent, runtimeId: string, progress: number) => void) => void
+    }
+  }
+
+  interface Window {
+    electron: ElectronAPI
+    api: BridgeAPI
+  }
+
+  type ErrorTypes = "error" | "warn" | "info" | "debug" | "verbose"
+}
