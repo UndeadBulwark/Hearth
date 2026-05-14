@@ -54,6 +54,7 @@ function MainMenu(): JSX.Element {
   const [pendingRuntime, setPendingRuntime] = useState<{ id: string; name: string; size: number } | null>(null)
   const [runtimeDownloading, setRuntimeDownloading] = useState(false)
   const [runtimeProgress, setRuntimeProgress] = useState(0)
+  const [launchingGuard, setLaunchingGuard] = useState(false)
 
   useEffect(() => {
     window.api.dotnetManager.onDownloadProgress((_event, _runtimeId, progress) => {
@@ -86,6 +87,9 @@ function MainMenu(): JSX.Element {
   ]
 
   async function PlayHandler(): Promise<void> {
+    if (launchingGuard) return addNotification(t("features.installations.gameAlreadyRunning"), "error")
+    setLaunchingGuard(true)
+
     const id = uuidv4()
     window.api.utils.setPreventAppClose("add", id, "Started playing Vintage Story.")
 
@@ -165,6 +169,7 @@ function MainMenu(): JSX.Element {
       const startedPlaying = Date.now()
 
       if (config.hideLauncherWhilePlaying) window.api.windowManager.hide()
+      window.api.windowManager.minimize()
 
       const closeStatus = await window.api.gameManager.executeGame(gameVersionToRun, selectedInstallation, config.account, dotnetEnv)
 
@@ -178,6 +183,7 @@ function MainMenu(): JSX.Element {
     } catch (err) {
       addNotification(t("notifications.body.errorExecutingGame"), "error")
     } finally {
+      setLaunchingGuard(false)
       window.api.utils.setPreventAppClose("remove", id, "Finished playing vintage Story.")
     }
   }
@@ -286,7 +292,7 @@ function MainMenu(): JSX.Element {
                   {/* Play trigger — left/middle of the bar */}
                   <NormalButton
                     title={t("generic.play")}
-                    disabled={!selectedInstallation}
+                    disabled={!selectedInstallation || launchingGuard}
                     onClick={PlayHandler}
                     className="flex-1 h-full p-1 pr-2 flex items-center !justify-start gap-2 text-sm disabled:opacity-50"
                   >

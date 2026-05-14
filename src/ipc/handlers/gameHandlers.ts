@@ -70,10 +70,12 @@ ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME, async (_event, version: G
         command = join(version.path, "Vintagestory")
         params = [`--dataPath=${installation.path}`, installation.startParams]
         if (installation.mesaGlThread) env = { ...env, MESA_GLTHREAD: "true" }
+        // Force XWayland for Wayland compatibility on older Mono/OpenTK versions
+        env = { ...env, SDL_VIDEODRIVER: "x11" }
       } else if (files.includes("Vintagestory.exe")) {
         logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory.exe found.`)
         command = monoInfo.command
-        env = { ...env, ...monoInfo.envMod }
+        env = { ...env, ...monoInfo.envMod, SDL_VIDEODRIVER: "x11" }
         params = [join(version.path, "Vintagestory.exe"), `--dataPath=${installation.path}`, installation.startParams]
       } else {
         logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Couldn't find a way to run Vintage Story, aborting...`)

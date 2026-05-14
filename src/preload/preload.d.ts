@@ -54,6 +54,7 @@ declare global {
       postUrl: (url: string, body: { email: string; password: string; twofacode?: string; preLoginToken?: string }) => Promise<object>
     }
     windowManager: {
+      minimize: () => void
       hide: () => void
       show: () => void
       closeToTray: () => void

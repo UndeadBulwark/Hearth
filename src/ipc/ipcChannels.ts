@@ -9,6 +9,7 @@ export const IPC_CHANNELS = {
     PREVENTED_APP_CLOSE: "prevented-app-close"
   },
   WINDOW_MANAGER: {
+    MINIMIZE: "minimize-window",
     HIDE: "hide-window",
     SHOW: "show-window",
     CLOSE_TO_TRAY: "close-to-tray"
