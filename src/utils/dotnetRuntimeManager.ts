@@ -122,11 +122,77 @@ export async function downloadRuntime(
 
     fse.removeSync(tarPath)
     logMessage("info", `[back] [dotnetRuntimeManager] ${runtimeId} installed successfully.`)
+
+    if (runtimeId === "mono") {
+      await syncMonoCertificates(runtimePath)
+    }
+
     return true
   } catch (err) {
     logMessage("error", `[back] [dotnetRuntimeManager] Failed to download ${runtimeId}: ${err}`)
     return false
   }
+}
+
+function findSystemCaBundle(): string | null {
+  const candidates = [
+    "/etc/ssl/certs/ca-certificates.crt",
+    "/etc/ssl/cert.pem",
+    "/etc/pki/tls/certs/ca-bundle.crt",
+    "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
+  ]
+  for (const p of candidates) {
+    if (fse.existsSync(p)) return p
+  }
+  return null
+}
+
+export async function syncMonoCertificates(runtimePath: string): Promise<void> {
+  const monoSgen = join(runtimePath, "usr", "bin", "mono-sgen")
+  const certSync = join(runtimePath, "usr", "lib", "mono", "4.5", "cert-sync.exe")
+  const caBundle = findSystemCaBundle()
+
+  if (!fse.existsSync(monoSgen) || !fse.existsSync(certSync)) {
+    logMessage("warn", `[back] [dotnetRuntimeManager] Missing mono-sgen or cert-sync, skipping cert sync`)
+    return
+  }
+
+  if (!caBundle) {
+    logMessage("warn", `[back] [dotnetRuntimeManager] No system CA bundle found, skipping cert sync`)
+    return
+  }
+
+  const env = {
+    ...process.env,
+    MONO_CFG_DIR: join(runtimePath, "etc"),
+    LD_LIBRARY_PATH: `${join(runtimePath, "usr", "lib")}:${process.env.LD_LIBRARY_PATH || ""}`,
+    MONO_PATH: join(runtimePath, "usr", "lib", "mono", "4.5")
+  }
+
+  logMessage("info", `[back] [dotnetRuntimeManager] Running cert-sync for Mono`)
+
+  return new Promise((resolve, _reject) => {
+    const proc = spawn(monoSgen, [certSync, "--user", caBundle], { env })
+
+    let stderr = ""
+    proc.stderr?.on("data", (data) => { stderr += data.toString() })
+
+    proc.on("close", (code) => {
+      if (code === 0) {
+        logMessage("info", `[back] [dotnetRuntimeManager] cert-sync completed`)
+        resolve()
+      } else {
+        logMessage("error", `[back] [dotnetRuntimeManager] cert-sync failed (code ${code}): ${stderr}`)
+        // Don't reject — the runtime works without certs, just warns users to run cert-sync manually.
+        resolve()
+      }
+    })
+
+    proc.on("error", (err) => {
+      logMessage("error", `[back] [dotnetRuntimeManager] cert-sync spawn error: ${err.message}`)
+      resolve()
+    })
+  })
 }
 
 export function getDotnetEnv(runtimeId: string): Record<string, string> | null {

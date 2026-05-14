@@ -215,7 +215,7 @@ function MainMenu(): JSX.Element {
 
       {/* Runtime download dialog */}
       <PopupDialogPanel
-        title={pendingRuntime ? t("features.dotnet.dialogTitle", { runtime: pendingRuntime.name }) : t("features.dotnet.dialogTitle", { runtime: ".NET Runtime" })}
+        title={pendingRuntime ? t("features.dotnet.dialogTitle", { runtime: pendingRuntime.name }) : t("features.dotnet.dialogTitle", { runtime: "Runtime" })}
         isOpen={runtimeDialogOpen}
         close={() => {
           setRuntimeDialogOpen(false)
@@ -223,7 +223,7 @@ function MainMenu(): JSX.Element {
         }}
       >
         <div className="flex flex-col gap-4 items-center">
-          <p>{pendingRuntime ? t("features.dotnet.dialogDesc", { runtime: pendingRuntime.name, size: pendingRuntime.size }) : t("features.dotnet.dialogDesc", { runtime: ".NET Runtime", size: 0 })}</p>
+          <p>{pendingRuntime ? t("features.dotnet.dialogDesc", { runtime: pendingRuntime.name, size: pendingRuntime.size }) : t("features.dotnet.dialogDesc", { runtime: "Runtime", size: 0 })}</p>
           <p className="text-zinc-400 text-xs">{t("features.dotnet.dialogCacheNote")}</p>
           {runtimeDownloading && (
             <div className="w-full flex flex-col gap-2 items-center">

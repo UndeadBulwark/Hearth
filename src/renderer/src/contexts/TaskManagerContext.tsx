@@ -242,7 +242,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }): JSX.E
     const name = runtimeId === "mono" ? "Mono" : runtimeId.replace("dotnet-", ".NET ")
 
     try {
-      tasksDispatch({ type: ACTIONS.ADD_TASK, payload: { id, name, desc: runtimeId, type: "runtime", progress: 0, status: "pending" } })
+      tasksDispatch({ type: ACTIONS.ADD_TASK, payload: { id, name, desc: name, type: "runtime", progress: 0, status: "pending" } })
       const success = await window.api.dotnetManager.downloadRuntime(runtimeId)
       if (!success) throw new Error("Runtime download failed")
       tasksDispatch({ type: ACTIONS.UPDATE_TASK, payload: { id, updates: { status: "completed", progress: 100 } } })

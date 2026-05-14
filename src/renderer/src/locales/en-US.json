@@ -304,7 +304,7 @@
       "downloading": "Downloading",
       "extracting": "Extracting",
       "compressing": "Compressing",
-      "runtimeDownload": "Downloading .NET Runtime",
+      "runtimeDownload": "Downloading Runtime",
       "error": "An error has occurred during the process!",
       "noTasksAvailable": "There are no tasks queued!"
     },
