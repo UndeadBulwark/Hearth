@@ -3,12 +3,6 @@ import { IPC_CHANNELS } from "@src/ipc/ipcChannels"
 import { getMainWindowRef } from "@src/utils/windowRef"
 import { logMessage } from "@src/utils/logManager"
 
-ipcMain.on(IPC_CHANNELS.WINDOW_MANAGER.MINIMIZE, () => {
-  logMessage("info", "[back] [ipc] [ipc/handlers/windowHandlers.ts] [MINIMIZE] Minimizing main window.")
-  const win = getMainWindowRef()
-  if (win) win.minimize()
-})
-
 ipcMain.on(IPC_CHANNELS.WINDOW_MANAGER.HIDE, () => {
   logMessage("info", "[back] [ipc] [ipc/handlers/windowHandlers.ts] [HIDE] Hiding main window.")
   const win = getMainWindowRef()

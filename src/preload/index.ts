@@ -58,7 +58,6 @@ const api: BridgeAPI = {
     postUrl: (url: string, body: { email: string; password: string; twofacode?: string; preLoginToken?: string }): Promise<object> => ipcRenderer.invoke(IPC_CHANNELS.NET_MANAGER.VS_LOGIN, url, body)
   },
   windowManager: {
-    minimize: (): void => ipcRenderer.send(IPC_CHANNELS.WINDOW_MANAGER.MINIMIZE),
     hide: (): void => ipcRenderer.send(IPC_CHANNELS.WINDOW_MANAGER.HIDE),
     show: (): void => ipcRenderer.send(IPC_CHANNELS.WINDOW_MANAGER.SHOW),
     closeToTray: (): void => ipcRenderer.send(IPC_CHANNELS.WINDOW_MANAGER.CLOSE_TO_TRAY)

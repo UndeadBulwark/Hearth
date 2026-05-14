@@ -1,43 +1,10 @@
 import { ipcMain } from "electron"
-import { spawn, spawnSync } from "child_process"
+import { spawn } from "child_process"
 import fse from "fs-extra"
 import { join } from "path"
 import os from "os"
 import { logMessage } from "@src/utils/logManager"
 import { IPC_CHANNELS } from "@src/ipc/ipcChannels"
-import { getMonoPath } from "@src/utils/dotnetRuntimeManager"
-
-const getMonoCommand = (): { command: string; envMod: Record<string, string> } | null => {
-  try {
-    const whichMono = spawnSync("which", ["mono"], { encoding: "utf-8" })
-    if (whichMono.status === 0 && whichMono.stdout.trim()) {
-      logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] System mono found at ${whichMono.stdout.trim()}`)
-      return { command: "mono", envMod: {} }
-    }
-  } catch {
-    // ignore
-  }
-
-  const downloadedMonoBinary = join(getMonoPath(), "usr", "bin", "mono-sgen")
-  if (fse.existsSync(downloadedMonoBinary)) {
-    logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] Using downloaded mono at ${downloadedMonoBinary}`)
-    const downloadedMonoLib = join(getMonoPath(), "usr", "lib")
-    const currentLdPath = process.env.LD_LIBRARY_PATH || ""
-    const newLdPath = currentLdPath ? `${downloadedMonoLib}:${currentLdPath}` : downloadedMonoLib
-    const monoRuntimeLibPath = join(downloadedMonoLib, "mono", "4.5")
-    return {
-      command: downloadedMonoBinary,
-      envMod: {
-        LD_LIBRARY_PATH: newLdPath,
-        MONO_PATH: monoRuntimeLibPath,
-        MONO_CFG_DIR: join(getMonoPath(), "etc")
-      }
-    }
-  }
-
-  logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] Neither system mono nor downloaded mono found.`)
-  return null
-}
 
 ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME, async (_event, version: GameVersionType, installation: InstallationType, account: AccountType | null, dotnetEnv?: Record<string, string>): Promise<boolean> => {
   logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Trying to run Vintage Story ${version.version} from ${version.path} on ${installation.path}.`)
@@ -57,25 +24,15 @@ ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME, async (_event, version: G
 
     try {
       const files = fse.readdirSync(version.path)
-      const monoInfo = getMonoCommand()
-      const useDownloadedMono = monoInfo?.command.endsWith("mono-sgen") ?? false
 
-      if (monoInfo === null) {
-        logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] No Mono runtime available for Vintage Story ${version.version}.`)
-        return false
-      }
-
-      if (files.includes("Vintagestory") && !useDownloadedMono) {
-        logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory found (system mono).`)
+      if (files.includes("Vintagestory")) {
+        logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory apphost found.`)
         command = join(version.path, "Vintagestory")
         params = [`--dataPath=${installation.path}`, installation.startParams]
         if (installation.mesaGlThread) env = { ...env, MESA_GLTHREAD: "true" }
-        // Force XWayland for Wayland compatibility on older Mono/OpenTK versions
-        env = { ...env, SDL_VIDEODRIVER: "x11" }
       } else if (files.includes("Vintagestory.exe")) {
         logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory.exe found.`)
-        command = monoInfo.command
-        env = { ...env, ...monoInfo.envMod, SDL_VIDEODRIVER: "x11" }
+        command = "dotnet"
         params = [join(version.path, "Vintagestory.exe"), `--dataPath=${installation.path}`, installation.startParams]
       } else {
         logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Couldn't find a way to run Vintage Story, aborting...`)
@@ -197,7 +154,6 @@ ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.LOOK_FOR_A_GAME_VERSION, async (_event,
 
   let command: string
   let params: string[]
-  let monoEnv: NodeJS.ProcessEnv = { ...process.env }
 
   const res: { exists: boolean; installedGameVersion: string | undefined } = { exists: false, installedGameVersion: undefined }
 
@@ -207,22 +163,13 @@ ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.LOOK_FOR_A_GAME_VERSION, async (_event,
     try {
       const files = fse.readdirSync(path)
 
-      const monoInfo = getMonoCommand()
-      const useDownloadedMono = monoInfo?.command.endsWith("mono-sgen") ?? false
-
-      if (monoInfo === null) {
-        logMessage("error", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] No Mono runtime available.`)
-        return false
-      }
-
-      if (files.includes("Vintagestory") && !useDownloadedMono) {
-        logMessage("info", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] Vintagestory found (system mono).`)
+      if (files.includes("Vintagestory")) {
+        logMessage("info", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] Vintagestory apphost found.`)
         command = join(path, "Vintagestory")
         params = [`-v`]
       } else if (files.includes("Vintagestory.exe")) {
         logMessage("info", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] Vintagestory.exe found.`)
-        command = monoInfo.command
-        monoEnv = { ...monoEnv, ...monoInfo.envMod }
+        command = "dotnet"
         params = [join(path, "Vintagestory.exe"), `-v`]
       } else {
         logMessage("info", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] Couldn't find Vintage Story on that folder.`)
@@ -264,7 +211,7 @@ ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.LOOK_FOR_A_GAME_VERSION, async (_event,
     const checkGameVersion = await new Promise<string | undefined>((resolve, reject) => {
       logMessage("info", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] Checking Vintage Story version with ${command} + ${params.join(" + ")}.`)
 
-      const externalApp = spawn(command, params, { env: monoEnv, cwd: path })
+      const externalApp = spawn(command, params, { cwd: path })
       let versionResult: string
 
       externalApp.stdout.on("data", (data) => {

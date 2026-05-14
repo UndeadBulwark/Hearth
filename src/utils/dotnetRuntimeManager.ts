@@ -4,21 +4,18 @@ import { app } from "electron"
 import axios from "axios"
 import { createWriteStream } from "fs"
 import { pipeline } from "stream/promises"
-import { spawn } from "child_process"
 import { logMessage } from "./logManager"
 
 const RUNTIME_URLS: Record<string, string> = {
   "dotnet-10": "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.8/dotnet-runtime-10.0.8-linux-x64.tar.gz",
   "dotnet-8": "https://builds.dotnet.microsoft.com/dotnet/Runtime/8.0.27/dotnet-runtime-8.0.27-linux-x64.tar.gz",
-  "dotnet-7": "https://builds.dotnet.microsoft.com/dotnet/Runtime/7.0.20/dotnet-runtime-7.0.20-linux-x64.tar.gz",
-  "mono": "https://github.com/UndeadBulwark/vs-launcher-mono-runtime/releases/download/v6.12.0.182/mono-6.12.0.182-linux-x64-full.tar.gz"
+  "dotnet-7": "https://builds.dotnet.microsoft.com/dotnet/Runtime/7.0.20/dotnet-runtime-7.0.20-linux-x64.tar.gz"
 }
 
 const RUNTIME_SIZES: Record<string, number> = {
   "dotnet-10": 38,
   "dotnet-8": 32,
-  "dotnet-7": 31,
-  "mono": 65
+  "dotnet-7": 31
 }
 
 export function getRuntimesDir(): string {
@@ -30,29 +27,7 @@ export function getRequiredRuntime(vsVersion: string): string | null {
   if (major > 1 || (major === 1 && minor >= 22)) return "dotnet-10"
   if (major === 1 && minor >= 21) return "dotnet-8"
   if (major === 1 && minor >= 18) return "dotnet-7"
-  return "mono"
-}
-
-export function getMonoPath(): string {
-  return join(getRuntimesDir(), "mono")
-}
-
-export function isMonoCached(): boolean {
-  return fse.existsSync(join(getMonoPath(), "usr", "bin", "mono-sgen"))
-}
-
-export function getMonoEnv(): Record<string, string> | null {
-  const monoPath = getMonoPath()
-  if (!isMonoCached()) return null
-
-  const monoLib = join(monoPath, "usr", "lib")
-  const currentLdPath = process.env.LD_LIBRARY_PATH || ""
-  const monoRuntimeLibPath = join(monoLib, "mono", "4.5")
-  return {
-    LD_LIBRARY_PATH: currentLdPath ? `${monoLib}:${currentLdPath}` : monoLib,
-    MONO_PATH: monoRuntimeLibPath,
-    MONO_CFG_DIR: join(monoPath, "etc")
-  }
+  return null
 }
 
 export function getRuntimePath(runtimeId: string): string {
@@ -60,7 +35,6 @@ export function getRuntimePath(runtimeId: string): string {
 }
 
 export function isRuntimeCached(runtimeId: string): boolean {
-  if (runtimeId === "mono") return isMonoCached()
   const path = getRuntimePath(runtimeId)
   return fse.existsSync(join(path, "dotnet"))
 }
@@ -112,21 +86,16 @@ export async function downloadRuntime(
     fse.ensureDirSync(runtimePath)
 
     await new Promise<void>((resolve, reject) => {
-      const tar = spawn("tar", ["-xzf", tarPath, "-C", runtimePath])
-      tar.on("close", (code) => {
+      const tar = require("child_process").spawn("tar", ["-xzf", tarPath, "-C", runtimePath])
+      tar.on("close", (code: number) => {
         if (code === 0) resolve()
         else reject(new Error(`tar exited with code ${code}`))
       })
-      tar.on("error", (err) => reject(err))
+      tar.on("error", (err: Error) => reject(err))
     })
 
     fse.removeSync(tarPath)
     logMessage("info", `[back] [dotnetRuntimeManager] ${runtimeId} installed successfully.`)
-
-    if (runtimeId === "mono") {
-      await syncMonoCertificates(runtimePath)
-    }
-
     return true
   } catch (err) {
     logMessage("error", `[back] [dotnetRuntimeManager] Failed to download ${runtimeId}: ${err}`)
@@ -134,69 +103,7 @@ export async function downloadRuntime(
   }
 }
 
-function findSystemCaBundle(): string | null {
-  const candidates = [
-    "/etc/ssl/certs/ca-certificates.crt",
-    "/etc/ssl/cert.pem",
-    "/etc/pki/tls/certs/ca-bundle.crt",
-    "/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem"
-  ]
-  for (const p of candidates) {
-    if (fse.existsSync(p)) return p
-  }
-  return null
-}
-
-export async function syncMonoCertificates(runtimePath: string): Promise<void> {
-  const monoSgen = join(runtimePath, "usr", "bin", "mono-sgen")
-  const certSync = join(runtimePath, "usr", "lib", "mono", "4.5", "cert-sync.exe")
-  const caBundle = findSystemCaBundle()
-
-  if (!fse.existsSync(monoSgen) || !fse.existsSync(certSync)) {
-    logMessage("warn", `[back] [dotnetRuntimeManager] Missing mono-sgen or cert-sync, skipping cert sync`)
-    return
-  }
-
-  if (!caBundle) {
-    logMessage("warn", `[back] [dotnetRuntimeManager] No system CA bundle found, skipping cert sync`)
-    return
-  }
-
-  const env = {
-    ...process.env,
-    MONO_CFG_DIR: join(runtimePath, "etc"),
-    LD_LIBRARY_PATH: `${join(runtimePath, "usr", "lib")}:${process.env.LD_LIBRARY_PATH || ""}`,
-    MONO_PATH: join(runtimePath, "usr", "lib", "mono", "4.5")
-  }
-
-  logMessage("info", `[back] [dotnetRuntimeManager] Running cert-sync for Mono`)
-
-  return new Promise((resolve, _reject) => {
-    const proc = spawn(monoSgen, [certSync, "--user", caBundle], { env })
-
-    let stderr = ""
-    proc.stderr?.on("data", (data) => { stderr += data.toString() })
-
-    proc.on("close", (code) => {
-      if (code === 0) {
-        logMessage("info", `[back] [dotnetRuntimeManager] cert-sync completed`)
-        resolve()
-      } else {
-        logMessage("error", `[back] [dotnetRuntimeManager] cert-sync failed (code ${code}): ${stderr}`)
-        // Don't reject — the runtime works without certs, just warns users to run cert-sync manually.
-        resolve()
-      }
-    })
-
-    proc.on("error", (err) => {
-      logMessage("error", `[back] [dotnetRuntimeManager] cert-sync spawn error: ${err.message}`)
-      resolve()
-    })
-  })
-}
-
 export function getDotnetEnv(runtimeId: string): Record<string, string> | null {
-  if (runtimeId === "mono") return getMonoEnv()
   const runtimePath = getRuntimePath(runtimeId)
   if (!isRuntimeCached(runtimeId)) return null
 
