@@ -30,7 +30,7 @@ const getMonoCommand = (): { command: string; envMod: Record<string, string> } |
       envMod: {
         LD_LIBRARY_PATH: newLdPath,
         MONO_PATH: monoRuntimeLibPath,
-        MONO_CFG_DIR: getMonoPath()
+        MONO_CFG_DIR: join(getMonoPath(), "etc")
       }
     }
   }

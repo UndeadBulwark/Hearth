@@ -11,14 +11,14 @@ const RUNTIME_URLS: Record<string, string> = {
   "dotnet-10": "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.8/dotnet-runtime-10.0.8-linux-x64.tar.gz",
   "dotnet-8": "https://builds.dotnet.microsoft.com/dotnet/Runtime/8.0.27/dotnet-runtime-8.0.27-linux-x64.tar.gz",
   "dotnet-7": "https://builds.dotnet.microsoft.com/dotnet/Runtime/7.0.20/dotnet-runtime-7.0.20-linux-x64.tar.gz",
-  "mono": "https://github.com/UndeadBulwark/vs-launcher-mono-runtime/releases/download/v6.12.0.182/mono-6.12.0.182-linux-x64.tar.gz"
+  "mono": "https://github.com/UndeadBulwark/vs-launcher-mono-runtime/releases/download/v6.12.0.182/mono-6.12.0.182-linux-x64-full.tar.gz"
 }
 
 const RUNTIME_SIZES: Record<string, number> = {
   "dotnet-10": 38,
   "dotnet-8": 32,
   "dotnet-7": 31,
-  "mono": 30
+  "mono": 65
 }
 
 export function getRuntimesDir(): string {
@@ -51,7 +51,7 @@ export function getMonoEnv(): Record<string, string> | null {
   return {
     LD_LIBRARY_PATH: currentLdPath ? `${monoLib}:${currentLdPath}` : monoLib,
     MONO_PATH: monoRuntimeLibPath,
-    MONO_CFG_DIR: monoPath
+    MONO_CFG_DIR: join(monoPath, "etc")
   }
 }
 
