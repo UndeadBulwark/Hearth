@@ -10,13 +10,15 @@ import { logMessage } from "./logManager"
 const RUNTIME_URLS: Record<string, string> = {
   "dotnet-10": "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.8/dotnet-runtime-10.0.8-linux-x64.tar.gz",
   "dotnet-8": "https://builds.dotnet.microsoft.com/dotnet/Runtime/8.0.27/dotnet-runtime-8.0.27-linux-x64.tar.gz",
-  "dotnet-7": "https://builds.dotnet.microsoft.com/dotnet/Runtime/7.0.20/dotnet-runtime-7.0.20-linux-x64.tar.gz"
+  "dotnet-7": "https://builds.dotnet.microsoft.com/dotnet/Runtime/7.0.20/dotnet-runtime-7.0.20-linux-x64.tar.gz",
+  "mono": "https://github.com/UndeadBulwark/vs-launcher-mono-runtime/releases/download/v6.12.0.182/mono-6.12.0.182-linux-x64.tar.gz"
 }
 
 const RUNTIME_SIZES: Record<string, number> = {
   "dotnet-10": 38,
   "dotnet-8": 32,
-  "dotnet-7": 31
+  "dotnet-7": 31,
+  "mono": 30
 }
 
 export function getRuntimesDir(): string {
@@ -28,7 +30,29 @@ export function getRequiredRuntime(vsVersion: string): string | null {
   if (major > 1 || (major === 1 && minor >= 22)) return "dotnet-10"
   if (major === 1 && minor >= 21) return "dotnet-8"
   if (major === 1 && minor >= 18) return "dotnet-7"
-  return null
+  return "mono"
+}
+
+export function getMonoPath(): string {
+  return join(getRuntimesDir(), "mono")
+}
+
+export function isMonoCached(): boolean {
+  return fse.existsSync(join(getMonoPath(), "usr", "bin", "mono-sgen"))
+}
+
+export function getMonoEnv(): Record<string, string> | null {
+  const monoPath = getMonoPath()
+  if (!isMonoCached()) return null
+
+  const monoLib = join(monoPath, "usr", "lib")
+  const currentLdPath = process.env.LD_LIBRARY_PATH || ""
+  const monoRuntimeLibPath = join(monoLib, "mono", "4.5")
+  return {
+    LD_LIBRARY_PATH: currentLdPath ? `${monoLib}:${currentLdPath}` : monoLib,
+    MONO_PATH: monoRuntimeLibPath,
+    MONO_CFG_DIR: monoPath
+  }
 }
 
 export function getRuntimePath(runtimeId: string): string {
@@ -36,6 +60,7 @@ export function getRuntimePath(runtimeId: string): string {
 }
 
 export function isRuntimeCached(runtimeId: string): boolean {
+  if (runtimeId === "mono") return isMonoCached()
   const path = getRuntimePath(runtimeId)
   return fse.existsSync(join(path, "dotnet"))
 }
@@ -105,6 +130,7 @@ export async function downloadRuntime(
 }
 
 export function getDotnetEnv(runtimeId: string): Record<string, string> | null {
+  if (runtimeId === "mono") return getMonoEnv()
   const runtimePath = getRuntimePath(runtimeId)
   if (!isRuntimeCached(runtimeId)) return null
 

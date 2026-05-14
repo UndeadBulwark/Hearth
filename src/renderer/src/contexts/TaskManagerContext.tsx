@@ -239,7 +239,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }): JSX.E
     onFinish: (status: boolean, error: Error | null) => void
   ): Promise<void> {
     const id = uuidv4()
-    const name = runtimeId.replace("dotnet-", ".NET ")
+    const name = runtimeId === "mono" ? "Mono" : runtimeId.replace("dotnet-", ".NET ")
 
     try {
       tasksDispatch({ type: ACTIONS.ADD_TASK, payload: { id, name, desc: runtimeId, type: "runtime", progress: 0, status: "pending" } })

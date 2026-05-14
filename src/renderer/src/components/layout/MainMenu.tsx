@@ -110,7 +110,8 @@ function MainMenu(): JSX.Element {
           const runtimeSize = await window.api.dotnetManager.getRuntimeSize(requiredRuntime)
 
           if (!runtimeDialogOpen) {
-            setPendingRuntime({ id: requiredRuntime, name: requiredRuntime.replace("dotnet-", ".NET "), size: runtimeSize })
+            const displayName = requiredRuntime === "mono" ? "Mono" : requiredRuntime.replace("dotnet-", ".NET ")
+            setPendingRuntime({ id: requiredRuntime, name: displayName, size: runtimeSize })
             setRuntimeDialogOpen(true)
             return
           }

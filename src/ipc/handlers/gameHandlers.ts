@@ -1,12 +1,13 @@
-import { ipcMain, app } from "electron"
+import { ipcMain } from "electron"
 import { spawn, spawnSync } from "child_process"
 import fse from "fs-extra"
 import { join } from "path"
 import os from "os"
 import { logMessage } from "@src/utils/logManager"
 import { IPC_CHANNELS } from "@src/ipc/ipcChannels"
+import { getMonoPath } from "@src/utils/dotnetRuntimeManager"
 
-const getMonoCommand = (): { command: string; envMod: Record<string, string> } => {
+const getMonoCommand = (): { command: string; envMod: Record<string, string> } | null => {
   try {
     const whichMono = spawnSync("which", ["mono"], { encoding: "utf-8" })
     if (whichMono.status === 0 && whichMono.stdout.trim()) {
@@ -17,30 +18,25 @@ const getMonoCommand = (): { command: string; envMod: Record<string, string> } =
     // ignore
   }
 
-  const monoBasePath = app.isPackaged
-    ? join(process.resourcesPath, "app.asar.unpacked", "resources", "mono")
-    : join(process.cwd(), "resources", "mono")
-
-  // Remove the wrapper check since we deleted the wrapper script
-  const bundledMonoBinary = join(monoBasePath, "usr", "bin", "mono-sgen")
-  if (fse.existsSync(bundledMonoBinary)) {
-    logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] Using bundled mono at ${bundledMonoBinary}`)
-    const bundledMonoLib = join(monoBasePath, "usr", "lib")
+  const downloadedMonoBinary = join(getMonoPath(), "usr", "bin", "mono-sgen")
+  if (fse.existsSync(downloadedMonoBinary)) {
+    logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] Using downloaded mono at ${downloadedMonoBinary}`)
+    const downloadedMonoLib = join(getMonoPath(), "usr", "lib")
     const currentLdPath = process.env.LD_LIBRARY_PATH || ""
-    const newLdPath = currentLdPath ? `${bundledMonoLib}:${currentLdPath}` : bundledMonoLib
-    const monoPath = join(bundledMonoLib, "mono", "4.5")
+    const newLdPath = currentLdPath ? `${downloadedMonoLib}:${currentLdPath}` : downloadedMonoLib
+    const monoRuntimeLibPath = join(downloadedMonoLib, "mono", "4.5")
     return {
-      command: bundledMonoBinary,
+      command: downloadedMonoBinary,
       envMod: {
         LD_LIBRARY_PATH: newLdPath,
-        MONO_PATH: monoPath,
-        MONO_CFG_DIR: monoBasePath
+        MONO_PATH: monoRuntimeLibPath,
+        MONO_CFG_DIR: getMonoPath()
       }
     }
   }
 
-  logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] Neither system mono nor bundled mono found.`)
-  return { command: "mono", envMod: {} }
+  logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] Neither system mono nor downloaded mono found.`)
+  return null
 }
 
 ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME, async (_event, version: GameVersionType, installation: InstallationType, account: AccountType | null, dotnetEnv?: Record<string, string>): Promise<boolean> => {
@@ -62,12 +58,14 @@ ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME, async (_event, version: G
     try {
       const files = fse.readdirSync(version.path)
       const monoInfo = getMonoCommand()
+      const useDownloadedMono = monoInfo?.command.endsWith("mono-sgen") ?? false
 
-      // If bundled mono is required (no system mono), bypass the Vintagestory wrapper
-      // and directly use mono-sgen with Vintagestory.exe
-      const useBundledMono = monoInfo.command.endsWith("mono-sgen")
+      if (monoInfo === null) {
+        logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] No Mono runtime available for Vintage Story ${version.version}.`)
+        return false
+      }
 
-      if (files.includes("Vintagestory") && !useBundledMono) {
+      if (files.includes("Vintagestory") && !useDownloadedMono) {
         logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory found (system mono).`)
         command = join(version.path, "Vintagestory")
         params = [`--dataPath=${installation.path}`, installation.startParams]
@@ -208,9 +206,14 @@ ipcMain.handle(IPC_CHANNELS.GAME_MANAGER.LOOK_FOR_A_GAME_VERSION, async (_event,
       const files = fse.readdirSync(path)
 
       const monoInfo = getMonoCommand()
-      const useBundledMono = monoInfo.command.endsWith("mono-sgen")
+      const useDownloadedMono = monoInfo?.command.endsWith("mono-sgen") ?? false
 
-      if (files.includes("Vintagestory") && !useBundledMono) {
+      if (monoInfo === null) {
+        logMessage("error", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] No Mono runtime available.`)
+        return false
+      }
+
+      if (files.includes("Vintagestory") && !useDownloadedMono) {
         logMessage("info", `[back] [ipc] [ipc/handlers/pathsHandlers.ts] [LOOK_FOR_A_GAME_VERSION] Vintagestory found (system mono).`)
         command = join(path, "Vintagestory")
         params = [`-v`]
