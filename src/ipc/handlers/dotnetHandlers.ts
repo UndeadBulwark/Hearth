@@ -1,12 +1,6 @@
 import { ipcMain } from "electron"
 import { IPC_CHANNELS } from "@src/ipc/ipcChannels"
-import {
-  getRequiredRuntime,
-  isRuntimeCached,
-  downloadRuntime,
-  getDotnetEnv,
-  getRuntimeSize
-} from "@src/utils/dotnetRuntimeManager"
+import { getRequiredRuntime, isRuntimeCached, downloadRuntime, getDotnetEnv, getRuntimeSize } from "@src/utils/dotnetRuntimeManager"
 import { logMessage } from "@src/utils/logManager"
 
 ipcMain.handle(IPC_CHANNELS.DOTNET_MANAGER.GET_REQUIRED_RUNTIME, (_event, vsVersion: string): string | null => {

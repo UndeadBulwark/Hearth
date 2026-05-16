@@ -1,5 +1,5 @@
-appId: xyz.xurxomf.vslauncher
-productName: VS Launcher
+appId: com.undeadbulwark.hearth
+productName: Hearth
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: VS Launcher
+  executableName: Hearth
   icon: resources/icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
@@ -39,11 +39,11 @@ linux:
     - AppImage
     - deb
     - flatpak
-  maintainer: XurxoMF
+  maintainer: UndeadBulwark
   category: Game
-  icon: resources/icon.icns
+  icon: resources/icon.png
 appImage:
-  artifactName: ${name}-${version}.${ext}
+  artifactName: Hearth.${ext}
 flatpak:
   artifactName: ${name}-${version}.${ext}
   runtime: org.freedesktop.Platform
@@ -56,7 +56,7 @@ deb:
 npmRebuild: false
 publish:
   provider: github
-  owner: XurxoMF
-  repo: vs-launcher
+  owner: UndeadBulwark
+  repo: hearth
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

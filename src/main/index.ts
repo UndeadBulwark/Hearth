@@ -39,11 +39,11 @@ function createTray(): void {
     }
     const trayIcon = nativeImage.createFromPath(trayIconPath)
     tray = new Tray(trayIcon)
-    tray.setToolTip("VS Launcher")
+    tray.setToolTip("Hearth")
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: "Show VS Launcher",
+        label: "Show Hearth",
         click: () => {
           if (mainWindow) {
             mainWindow.show()
@@ -88,7 +88,7 @@ function createWindow(): void {
     center: true,
     width: 1280,
     height: 720,
-    title: `VS Launcher - ${app.getVersion()}`,
+    title: `Hearth - ${app.getVersion()}`,
     show: false,
     autoHideMenuBar: true,
     fullscreenable: false,
@@ -198,7 +198,7 @@ app.whenReady().then(async () => {
   logMessage("info", `[back] [index] [main/index.ts] [whenReady] cachedMinimizeToTray initialized to ${initialConfig.minimizeToTray ?? false}`)
 
   // Set app user model id for windows
-  electronApp.setAppUserModelId("xyz.xurxomf")
+  electronApp.setAppUserModelId("com.undeadbulwark.hearth")
 
   // Default open or close DevTools by F12 in development and ignore CommandOrControl + R in production.
   app.on("browser-window-created", (_, window) => {

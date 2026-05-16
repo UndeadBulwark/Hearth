@@ -84,10 +84,7 @@ export interface TaskContextType {
     onFinish: (status: boolean, error: Error | null) => void,
     compressionLevel?: number
   ): Promise<void>
-  startRuntimeDownload(
-    runtimeId: string,
-    onFinish: (status: boolean, error: Error | null) => void
-  ): Promise<void>
+  startRuntimeDownload(runtimeId: string, onFinish: (status: boolean, error: Error | null) => void): Promise<void>
   removeTask(id: string): void
 }
 
@@ -234,10 +231,7 @@ export const TaskProvider = ({ children }: { children: React.ReactNode }): JSX.E
     }
   }
 
-  async function startRuntimeDownload(
-    runtimeId: string,
-    onFinish: (status: boolean, error: Error | null) => void
-  ): Promise<void> {
+  async function startRuntimeDownload(runtimeId: string, onFinish: (status: boolean, error: Error | null) => void): Promise<void> {
     const id = uuidv4()
     const name = runtimeId === "mono" ? "Mono" : runtimeId.replace("dotnet-", ".NET ")
 

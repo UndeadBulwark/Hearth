@@ -21,7 +21,7 @@ function InfoAndHelpPage(): JSX.Element {
     ;(async (): Promise<void> => {
       setVslVersion(await window.api.utils.getAppVersion())
       setOs(await window.api.utils.getOs())
-      setLogsFolder(await window.api.pathsManager.formatPath([await window.api.pathsManager.getCurrentUserDataPath(), "VSLauncher", "Logs"]))
+      setLogsFolder(await window.api.pathsManager.formatPath([await window.api.pathsManager.getCurrentUserDataPath(), "Hearth", "Logs"]))
     })()
   }, [])
 
@@ -46,19 +46,19 @@ function InfoAndHelpPage(): JSX.Element {
           <h1 className="text-center text-4xl font-bold">{t("features.infoAndHelp.title")}</h1>
 
           <div className="w-full shrink-0 flex flex-wrap items-center justify-center gap-2">
-            <SocialButtons icon={<PiGithubLogoDuotone />} to="https://github.com/XurxoMF/vs-launcher/issues" text={t("generic.issues")} />
+            <SocialButtons icon={<PiGithubLogoDuotone />} to="https://github.com/UndeadBulwark/hearth/issues" text={t("generic.issues")} />
             <SocialButtons icon={<PiInfoDuotone />} to="https://vsldocs.xurxomf.xyz/" text={t("generic.guides")} />
             <SocialButtons icon={<PiDiscordLogoDuotone />} to="https://discord.gg/RtWpYBRRUz" text={t("generic.discord")} />
             <SocialButtons icon={<PiCoinsDuotone />} to="https://ko-fi.com/xurxomf" text={t("generic.donate")} />
             <SocialButtons icon={<PiUsersThreeDuotone />} to="https://vsldocs.xurxomf.xyz/important-info/contributors" text={t("generic.contributors")} />
-            <SocialButtons icon={<PiCodeDuotone />} to="https://github.com/XurxoMF/vs-launcher" text={t("generic.source")} />
+            <SocialButtons icon={<PiCodeDuotone />} to="https://github.com/UndeadBulwark/hearth" text={t("generic.source")} />
           </div>
 
           <DropdownSection title={t("features.infoAndHelp.debugInfoTitle")} startOpen={false}>
             <p>{t("features.infoAndHelp.debugInfoDesc")}</p>
 
             <div className="select-all p-2 rounded-sm overflow-hidden border border-zinc-400/5 bg-zinc-950/80 shadow-sm shadow-zinc-950/50 hover:shadow-none">
-              <p>VS Launcher Version - v{vslVersion}</p>
+              <p>Hearth Version - v{vslVersion}</p>
               <p>OS Type - {os}</p>
             </div>
 

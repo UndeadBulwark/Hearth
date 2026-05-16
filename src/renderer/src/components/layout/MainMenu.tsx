@@ -31,7 +31,7 @@ import { useTaskContext } from "@renderer/contexts/TaskManagerContext"
 import { NormalButton } from "@renderer/components/ui/Buttons"
 import { FormButton, FormLinkButton } from "@renderer/components/ui/FormComponents"
 import PopupDialogPanel from "@renderer/components/ui/PopupDialogPanel"
-import SessionButton from "../ui/SessionButton"
+import AccountSelector from "../ui/AccountSelector"
 
 interface MainMenuLinkProps {
   icon: ReactNode
@@ -73,7 +73,7 @@ function MainMenu(): JSX.Element {
       setRunningDots((d) => (d + 1) % 3)
     }, 400)
 
-    return () => clearInterval(id)
+    return (): void => clearInterval(id)
   }, [selectedInstallation?._playing])
 
   const GROUP_1: MainMenuLinkProps[] = [
@@ -150,7 +150,7 @@ function MainMenu(): JSX.Element {
           if (!nowCached) return addNotification(t("features.dotnet.runtimeInstallFailed"), "error")
         }
 
-        dotnetEnv = await window.api.dotnetManager.getDotnetEnv(requiredRuntime) ?? undefined
+        dotnetEnv = (await window.api.dotnetManager.getDotnetEnv(requiredRuntime)) ?? undefined
       }
       // --- End runtime check ---
 
@@ -166,7 +166,7 @@ function MainMenu(): JSX.Element {
 
       if (config.hideLauncherWhilePlaying) window.api.windowManager.hide()
 
-      const closeStatus = await window.api.gameManager.executeGame(gameVersionToRun, selectedInstallation, config.account, dotnetEnv)
+      const closeStatus = await window.api.gameManager.executeGame(gameVersionToRun, selectedInstallation, config.lastUsedAccountId, dotnetEnv)
 
       if (config.showLauncherWhenGameStops) window.api.windowManager.show()
 
@@ -187,7 +187,7 @@ function MainMenu(): JSX.Element {
   return (
     <header className="z-99 w-72 shrink-0 flex flex-col gap-4 p-2 bg-zinc-950/80 shadow-sm shadow-zinc-950/50 backdrop-blur-md border-r border-zinc-400/5">
       <div className="flex items-center shrink-0 gap-2">
-        <SessionButton />
+        <AccountSelector />
       </div>
 
       <div className="h-full flex flex-col gap-2">
@@ -198,12 +198,7 @@ function MainMenu(): JSX.Element {
         ))}
 
         <Link to="/downloads" className="flex items-start">
-          <LinkContent
-            icon={<PiDownloadDuotone />}
-            text={t("components.tasksMenu.title")}
-            desc={t("components.tasksMenu.desc")}
-            link="/downloads"
-          />
+          <LinkContent icon={<PiDownloadDuotone />} text={t("components.tasksMenu.title")} desc={t("components.tasksMenu.desc")} link="/downloads" />
         </Link>
 
         {GROUP_1.slice(4).map((link) => (
@@ -228,9 +223,7 @@ function MainMenu(): JSX.Element {
           {runtimeDownloading && (
             <div className="w-full flex flex-col gap-2 items-center">
               <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                <div className="h-full bg-vs rounded-full transition-all duration-200"
-                  style={{ width: `${runtimeProgress}%` }}
-                />
+                <div className="h-full bg-vs rounded-full transition-all duration-200" style={{ width: `${runtimeProgress}%` }} />
               </div>
               <p className="text-xs text-zinc-400">{t("features.dotnet.downloadingProgress", { progress: runtimeProgress })}</p>
             </div>
@@ -246,10 +239,7 @@ function MainMenu(): JSX.Element {
               {t("generic.cancel")}
             </NormalButton>
             {!runtimeDownloading && (
-              <NormalButton
-                title={t("features.dotnet.buttonDownloadAndPlay")}
-                onClick={PlayHandler}
-              >
+              <NormalButton title={t("features.dotnet.buttonDownloadAndPlay")} onClick={PlayHandler}>
                 {t("features.dotnet.buttonDownloadAndPlay")}
               </NormalButton>
             )}
@@ -278,9 +268,7 @@ function MainMenu(): JSX.Element {
                 <div className="relative w-full h-14 flex rounded-sm overflow-hidden bg-[#a06828] shadow-sm shadow-zinc-950/50">
                   {selectedInstallation?._playing && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 backdrop-blur-[1px] rounded-sm">
-                      <span className="text-sm font-semibold text-white/90">
-                        Running{" ".concat(".".repeat(runningDots + 1))}
-                      </span>
+                      <span className="text-sm font-semibold text-white/90">Running{" ".concat(".".repeat(runningDots + 1))}</span>
                     </div>
                   )}
                   {/* Play trigger — left/middle of the bar */}
@@ -406,11 +394,7 @@ function MainMenu(): JSX.Element {
             <span>{t("generic.edit")}</span>
           </FormLinkButton>
 
-          <FormLinkButton
-            className="flex-1 h-8 flex items-center justify-center gap-1 text-xs"
-            title={t("features.installations.addNewInstallation")}
-            to="/installations/add"
-          >
+          <FormLinkButton className="flex-1 h-8 flex items-center justify-center gap-1 text-xs" title={t("features.installations.addNewInstallation")} to="/installations/add">
             <PiPlusCircleDuotone />
             <span>{t("generic.add")}</span>
           </FormLinkButton>

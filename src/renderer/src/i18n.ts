@@ -17,7 +17,7 @@ import ukUA from "@renderer/locales/uk-UA.json"
 
 i18n.use(initReactI18next).init({
   resources: {
-    "en-US": { translation: enUS, name: "English", credits: "by XurxoMF" },
+    "en-US": { translation: enUS, name: "English", credits: "by UndeadBulwark (fork), based on XurxoMF" },
     "es-ES": { translation: esES, name: "Español (España)", credits: "by XurxoMF" },
     "ru-RU": { translation: ruRU, name: "Русский", credits: "by megabezdelnik" },
     "zh-CN": { translation: zhCN, name: "简体中文", credits: "by liuyujielol" },

@@ -58,5 +58,10 @@ export const IPC_CHANNELS = {
     GET_DOTNET_ENV: "get-dotnet-env",
     GET_RUNTIME_SIZE: "get-runtime-size",
     DOWNLOAD_PROGRESS: "dotnet-download-progress"
+  },
+  ACCOUNT_MANAGER: {
+    SAVE_ACCOUNT: "save-account",
+    REMOVE_ACCOUNT: "remove-account",
+    GET_ACCOUNT_SESSION: "get-account-session"
   }
 }

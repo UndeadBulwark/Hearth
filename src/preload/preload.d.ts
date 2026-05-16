@@ -46,7 +46,7 @@ declare global {
       copyToIcons: (path: string, name: string) => Promise<{ status: true; file: string } | { status: false }>
     }
     gameManager: {
-      executeGame: (version: GameVersionType, installation: InstallationType, account: AccountType | null, dotnetEnv?: Record<string, string>) => Promise<boolean>
+      executeGame: (version: GameVersionType, installation: InstallationType, accountId: string | null, dotnetEnv?: Record<string, string>) => Promise<boolean>
       lookForAGameVersion: (path: string) => Promise<{ exists: boolean; installedGameVersion: string | undefined }>
     }
     netManager: {
@@ -65,6 +65,11 @@ declare global {
       getDotnetEnv: (runtimeId: string) => Promise<Record<string, string> | null>
       getRuntimeSize: (runtimeId: string) => Promise<number>
       onDownloadProgress: (callback: (event: Electron.IpcRendererEvent, runtimeId: string, progress: number) => void) => void
+    }
+    accountManager: {
+      saveAccount: (account: AccountType) => Promise<{ id: string; metadata: AccountMetadataType }>
+      removeAccount: (id: string) => Promise<boolean>
+      getAccountSession: (id: string) => Promise<EncryptedSessionDataType | null>
     }
   }
 

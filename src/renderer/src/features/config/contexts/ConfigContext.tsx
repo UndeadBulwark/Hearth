@@ -10,7 +10,10 @@ export enum CONFIG_ACTIONS {
   SET_DEFAULT_INSTALLATIONS_FOLDER = "SET_DEFAULT_INSTALLATIONS_FOLDER",
   SET_DEFAULT_VERSIONS_FOLDER = "SET_DEFAULT_VERSIONS_FOLDER",
   SET_DEFAULT_BACKUPS_FOLDER = "SET_DEFAULT_BACKUPS_FOLDER",
-  SET_ACCOUNT = "SET_ACCOUNT",
+  SET_LAST_USED_ACCOUNT_ID = "SET_LAST_USED_ACCOUNT_ID",
+
+  ADD_ACCOUNT = "ADD_ACCOUNT",
+  REMOVE_ACCOUNT = "REMOVE_ACCOUNT",
 
   ADD_INSTALLATION = "ADD_INSTALLATION",
   DELETE_INSTALLATION = "DELETE_INSTALLATION",
@@ -64,9 +67,19 @@ export interface SetDefaultBackupsFolder {
   payload: string
 }
 
-export interface SetAccount {
-  type: CONFIG_ACTIONS.SET_ACCOUNT
-  payload: AccountType | null
+export interface SetLastUsedAccountId {
+  type: CONFIG_ACTIONS.SET_LAST_USED_ACCOUNT_ID
+  payload: string | null
+}
+
+export interface AddAccount {
+  type: CONFIG_ACTIONS.ADD_ACCOUNT
+  payload: AccountMetadataType
+}
+
+export interface RemoveAccount {
+  type: CONFIG_ACTIONS.REMOVE_ACCOUNT
+  payload: { id: string }
 }
 
 export interface AddInstallation {
@@ -178,7 +191,9 @@ export type ConfigAction =
   | SetDefaultInstllationsFolder
   | SetDefaultVersionsFolder
   | SetDefaultBackupsFolder
-  | SetAccount
+  | SetLastUsedAccountId
+  | AddAccount
+  | RemoveAccount
   | AddInstallation
   | DeleteInstallation
   | EditInstallation
@@ -210,8 +225,16 @@ const configReducer = (config: ConfigType, action: ConfigAction): ConfigType => 
       return { ...config, defaultVersionsFolder: action.payload }
     case CONFIG_ACTIONS.SET_DEFAULT_BACKUPS_FOLDER:
       return { ...config, backupsFolder: action.payload }
-    case CONFIG_ACTIONS.SET_ACCOUNT:
-      return { ...config, account: action.payload }
+    case CONFIG_ACTIONS.SET_LAST_USED_ACCOUNT_ID:
+      return { ...config, lastUsedAccountId: action.payload }
+    case CONFIG_ACTIONS.ADD_ACCOUNT:
+      return { ...config, accounts: [...config.accounts, action.payload] }
+    case CONFIG_ACTIONS.REMOVE_ACCOUNT:
+      return {
+        ...config,
+        accounts: config.accounts.filter((account) => account.id !== action.payload.id),
+        lastUsedAccountId: config.lastUsedAccountId === action.payload.id ? null : config.lastUsedAccountId
+      }
     case CONFIG_ACTIONS.ADD_INSTALLATION:
       return { ...config, installations: [action.payload, ...config.installations] }
     case CONFIG_ACTIONS.DELETE_INSTALLATION:
@@ -298,6 +321,7 @@ const configReducer = (config: ConfigType, action: ConfigAction): ConfigType => 
 export const initialState: ConfigType = {
   version: 0,
   lastUsedInstallation: null,
+  lastUsedAccountId: null,
   defaultInstallationsFolder: "",
   defaultVersionsFolder: "",
   backupsFolder: "",
@@ -308,7 +332,7 @@ export const initialState: ConfigType = {
     y: 0,
     maximized: false
   },
-  account: null,
+  accounts: [],
   installations: [],
   gameVersions: [],
   favMods: [],

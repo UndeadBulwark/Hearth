@@ -44,17 +44,14 @@ function HomePage(): JSX.Element {
       })
   }, [])
 
-  const handleContentClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const el = (e.target as HTMLElement).closest("[data-yt-embed]") as HTMLElement | null
-      if (el) {
-        e.preventDefault()
-        const url = el.getAttribute("data-yt-url")
-        if (url) window.api.utils.openOnBrowser(url)
-      }
-    },
-    []
-  )
+  const handleContentClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const el = (e.target as HTMLElement).closest("[data-yt-embed]") as HTMLElement | null
+    if (el) {
+      e.preventDefault()
+      const url = el.getAttribute("data-yt-url")
+      if (url) window.api.utils.openOnBrowser(url)
+    }
+  }, [])
 
   const current = posts[selected]
 
@@ -64,18 +61,12 @@ function HomePage(): JSX.Element {
         {/* Sidebar */}
         <div className="w-56 shrink-0 flex flex-col overflow-hidden rounded-md bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
           <div className="px-3 py-2 border-b border-zinc-400/5 shrink-0">
-            <div className="text-xs font-bold tracking-widest uppercase text-vs">
-              {t("features.home.news.latestNews")}
-            </div>
+            <div className="text-xs font-bold tracking-widest uppercase text-vs">{t("features.home.news.latestNews")}</div>
           </div>
 
-          {loading && (
-            <p className="text-zinc-400 text-xs px-3 py-2">{t("features.home.news.loading")}</p>
-          )}
+          {loading && <p className="text-zinc-400 text-xs px-3 py-2">{t("features.home.news.loading")}</p>}
 
-          {fetchError && (
-            <p className="text-red-400 text-xs px-3 py-2">{t("features.home.news.failedToLoad")}</p>
-          )}
+          {fetchError && <p className="text-red-400 text-xs px-3 py-2">{t("features.home.news.failedToLoad")}</p>}
 
           <div className="flex-1 overflow-y-auto flex flex-col gap-px p-1">
             {posts.map((post, i) => (
@@ -84,19 +75,10 @@ function HomePage(): JSX.Element {
                 onClick={() => setSelected(i)}
                 className={clsx(
                   "text-left px-2 py-1.5 rounded-sm cursor-pointer transition-all duration-150",
-                  i === selected
-                    ? "bg-vs/15 border border-vs/25"
-                    : "bg-transparent border border-transparent hover:bg-zinc-800/40"
+                  i === selected ? "bg-vs/15 border border-vs/25" : "bg-transparent border border-transparent hover:bg-zinc-800/40"
                 )}
               >
-                <div
-                  className={clsx(
-                    "text-xs leading-snug",
-                    i === selected ? "font-semibold text-vs" : "font-normal text-zinc-300"
-                  )}
-                >
-                  {post.title}
-                </div>
+                <div className={clsx("text-xs leading-snug", i === selected ? "font-semibold text-vs" : "font-normal text-zinc-300")}>{post.title}</div>
                 <div className="text-[10px] text-zinc-500 mt-0.5">
                   {post.date
                     ? new Date(post.date).toLocaleDateString(undefined, {
@@ -141,16 +123,10 @@ function HomePage(): JSX.Element {
               </div>
 
               {/* Body */}
-              <div
-                className="flex-1 overflow-y-auto px-5 py-4 text-sm text-zinc-300 leading-relaxed"
-                onClick={handleContentClick}
-                dangerouslySetInnerHTML={{ __html: current.content }}
-              />
+              <div className="flex-1 overflow-y-auto px-5 py-4 text-sm text-zinc-300 leading-relaxed" onClick={handleContentClick} dangerouslySetInnerHTML={{ __html: current.content }} />
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">
-              {t("features.home.news.selectAPost")}
-            </div>
+            <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm">{t("features.home.news.selectAPost")}</div>
           )}
         </div>
       </div>

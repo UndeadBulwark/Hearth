@@ -12,7 +12,6 @@ function fixContentUrls(html: string): string {
     img.style.display = "block"
     img.style.boxShadow = "0 2px 8px rgba(0,0,0,0.4)"
   })
-
   ;(Array.from(doc.querySelectorAll("iframe")) as HTMLElement[]).forEach((iframe) => {
     let src = iframe.getAttribute("src") || ""
     if (!src || src.trim() === "") {
@@ -30,8 +29,7 @@ function fixContentUrls(html: string): string {
       const wrapper = doc.createElement("div")
       wrapper.setAttribute("data-yt-embed", embedUrl)
       wrapper.setAttribute("data-yt-url", watchUrl)
-      wrapper.style.cssText =
-        "position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;margin-top:10px;margin-bottom:10px;overflow:hidden;cursor:pointer;background:#000;"
+      wrapper.style.cssText = "position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;margin-top:10px;margin-bottom:10px;overflow:hidden;cursor:pointer;background:#000;"
 
       const img = doc.createElement("img")
       img.src = thumb
@@ -40,8 +38,7 @@ function fixContentUrls(html: string): string {
       const btn = doc.createElement("div")
       btn.style.cssText =
         "position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;background:rgba(0,0,0,0.7);border-radius:50%;display:flex;align-items:center;justify-content:center;"
-      btn.innerHTML =
-        '<svg width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="9,7 19,12 9,17"/></svg>'
+      btn.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="white"><polygon points="9,7 19,12 9,17"/></svg>'
 
       wrapper.appendChild(img)
       wrapper.appendChild(btn)
@@ -49,11 +46,9 @@ function fixContentUrls(html: string): string {
     } else {
       iframe.removeAttribute("width")
       iframe.removeAttribute("height")
-      iframe.style.cssText =
-        "width:100%;aspect-ratio:16/9;border-radius:6px;margin-top:10px;margin-bottom:10px;border:none;display:block;"
+      iframe.style.cssText = "width:100%;aspect-ratio:16/9;border-radius:6px;margin-top:10px;margin-bottom:10px;border:none;display:block;"
     }
   })
-
   ;(Array.from(doc.querySelectorAll("a")) as HTMLElement[]).forEach((a) => {
     const href = a.getAttribute("href")
     if (href && href.startsWith("//")) a.setAttribute("href", "https:" + href)
@@ -61,7 +56,6 @@ function fixContentUrls(html: string): string {
     a.setAttribute("rel", "noopener noreferrer")
     a.style.color = "#fbbf24"
   })
-
   ;(Array.from(doc.querySelectorAll("h1,h2,h3,h4,h5,h6")) as HTMLElement[]).forEach((h) => {
     h.style.color = "#fcd34d"
     h.style.fontWeight = "700"
@@ -71,12 +65,10 @@ function fixContentUrls(html: string): string {
     h.style.borderBottom = "1px solid rgba(251,191,36,0.15)"
     h.style.paddingBottom = "4px"
   })
-
   ;(Array.from(doc.querySelectorAll("p")) as HTMLElement[]).forEach((p) => {
     p.style.marginTop = "6px"
     p.style.marginBottom = "6px"
   })
-
   ;(Array.from(doc.querySelectorAll("ul,ol")) as HTMLElement[]).forEach((list) => {
     list.style.paddingLeft = "20px"
     list.style.marginTop = "6px"

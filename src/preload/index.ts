@@ -49,13 +49,18 @@ const api: BridgeAPI = {
     copyToIcons: (path: string, name: string): Promise<{ status: true; file: string } | { status: false }> => ipcRenderer.invoke(IPC_CHANNELS.PATHS_MANAGER.COPY_TO_ICONS, path, name)
   },
   gameManager: {
-    executeGame: (version: GameVersionType, installation: InstallationType, account: AccountType | null, dotnetEnv?: Record<string, string>): Promise<boolean> =>
-      ipcRenderer.invoke(IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME, version, installation, account, dotnetEnv),
+    executeGame: (version: GameVersionType, installation: InstallationType, accountId: string | null, dotnetEnv?: Record<string, string>): Promise<boolean> =>
+      ipcRenderer.invoke(IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME, version, installation, accountId, dotnetEnv),
     lookForAGameVersion: (path: string): Promise<{ exists: boolean; installedGameVersion: string | undefined }> => ipcRenderer.invoke(IPC_CHANNELS.GAME_MANAGER.LOOK_FOR_A_GAME_VERSION, path)
   },
   netManager: {
     queryURL: (url: string): Promise<string> => ipcRenderer.invoke(IPC_CHANNELS.NET_MANAGER.QUERY_URL, url),
     postUrl: (url: string, body: { email: string; password: string; twofacode?: string; preLoginToken?: string }): Promise<object> => ipcRenderer.invoke(IPC_CHANNELS.NET_MANAGER.VS_LOGIN, url, body)
+  },
+  accountManager: {
+    saveAccount: (account: AccountType): Promise<{ id: string; metadata: AccountMetadataType }> => ipcRenderer.invoke(IPC_CHANNELS.ACCOUNT_MANAGER.SAVE_ACCOUNT, account),
+    removeAccount: (id: string): Promise<boolean> => ipcRenderer.invoke(IPC_CHANNELS.ACCOUNT_MANAGER.REMOVE_ACCOUNT, id),
+    getAccountSession: (id: string): Promise<EncryptedSessionDataType | null> => ipcRenderer.invoke(IPC_CHANNELS.ACCOUNT_MANAGER.GET_ACCOUNT_SESSION, id)
   },
   windowManager: {
     hide: (): void => ipcRenderer.send(IPC_CHANNELS.WINDOW_MANAGER.HIDE),

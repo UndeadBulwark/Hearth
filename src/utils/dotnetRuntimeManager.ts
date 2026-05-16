@@ -43,10 +43,7 @@ export function getRuntimeSize(runtimeId: string): number {
   return RUNTIME_SIZES[runtimeId] ?? 55
 }
 
-export async function downloadRuntime(
-  runtimeId: string,
-  onProgress: (progress: number) => void
-): Promise<boolean> {
+export async function downloadRuntime(runtimeId: string, onProgress: (progress: number) => void): Promise<boolean> {
   try {
     const url = RUNTIME_URLS[runtimeId]
     if (!url) {

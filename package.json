@@ -1,10 +1,10 @@
 {
-  "name": "vs-launcher",
-  "version": "1.5.8",
-  "description": "Unofficial Vintage Story Launcher for... Vintage Story :)",
+  "name": "hearth",
+  "version": "1.0.0",
+  "description": "A heavily overhauled fork of VS Launcher for Vintage Story — built for multi-account management and a better experience.",
   "main": "./out/main/index.js",
-  "author": "XurxoMF",
-  "homepage": "https://github.com/XurxoMF/vs-launcher/wiki",
+  "author": "UndeadBulwark",
+  "homepage": "https://github.com/UndeadBulwark/hearth",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",

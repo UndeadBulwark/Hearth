@@ -67,11 +67,7 @@ function ConfigPage(): JSX.Element {
                 <p className="font-bold text-sm">{t("features.config.minimizeToTray")}</p>
                 <p className="text-zinc-400 text-xs">{t("features.config.minimizeToTrayDesc")}</p>
               </div>
-              <FormToggle
-                title={t("features.config.minimizeToTray")}
-                value={config.minimizeToTray}
-                onChange={(v) => configDispatch({ type: CONFIG_ACTIONS.SET_MINIMIZE_TO_TRAY, payload: v })}
-              />
+              <FormToggle title={t("features.config.minimizeToTray")} value={config.minimizeToTray} onChange={(v) => configDispatch({ type: CONFIG_ACTIONS.SET_MINIMIZE_TO_TRAY, payload: v })} />
             </FromGroup>
 
             <FromGroup className="items-center justify-between">

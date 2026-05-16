@@ -29,13 +29,7 @@ const ICON_TYPES = {
   runtime: <PiDownloadDuotone />
 }
 
-function TasksMenu({
-  className,
-  children
-}: {
-  className?: string
-  children?: React.ReactNode
-}): JSX.Element {
+function TasksMenu({ className, children }: { className?: string; children?: React.ReactNode }): JSX.Element {
   const { t } = useTranslation()
   const { tasks, removeTask } = useTaskContext()
 
@@ -43,10 +37,7 @@ function TasksMenu({
     <Popover className="relative w-full">
       {({ open }) => (
         <>
-          <PopoverButton
-            as="div"
-            className={clsx(className, open && "border-vs bg-vs/15")}
-          >
+          <PopoverButton as="div" className={clsx(className, open && "border-vs bg-vs/15")}>
             {children ?? <PiDownloadDuotone />}
           </PopoverButton>
 

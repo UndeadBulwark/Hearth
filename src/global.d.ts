@@ -1,7 +1,23 @@
 declare global {
+  type AccountMetadataType = {
+    id: string
+    email: string
+    playerName: string
+    playerUid: string
+  }
+
+  type EncryptedSessionDataType = {
+    mptoken: string | null
+    sessionKey: string
+    sessionSignature: string
+    playerEntitlements: string
+    hostGameServer: boolean
+  }
+
   type BasicConfigType = {
     version: number
     lastUsedInstallation: string | null
+    lastUsedAccountId: string | null
     defaultInstallationsFolder: string
     defaultVersionsFolder: string
     backupsFolder: string
@@ -71,7 +87,7 @@ declare global {
 
   type ConfigType = BasicConfigType & {
     window: WindowType
-    account: AccountType | null
+    accounts: AccountMetadataType[]
     installations: InstallationType[]
     gameVersions: GameVersionType[]
     customIcons: IconType[]

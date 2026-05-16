@@ -247,7 +247,7 @@ function ListMods(): JSX.Element {
                                     title={t("generic.issues")}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      window.api.utils.openOnBrowser("https://github.com/XurxoMF/vs-launcher/issues")
+                                      window.api.utils.openOnBrowser("https://github.com/UndeadBulwark/hearth/issues")
                                     }}
                                     className="text-vsl"
                                   >
@@ -316,7 +316,7 @@ function ListMods(): JSX.Element {
                                     title={t("generic.issues")}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      window.api.utils.openOnBrowser("https://github.com/XurxoMF/vs-launcher/issues")
+                                      window.api.utils.openOnBrowser("https://github.com/UndeadBulwark/hearth/issues")
                                     }}
                                     className="text-vsl"
                                   >
@@ -371,7 +371,7 @@ function ListMods(): JSX.Element {
                                     title={t("generic.issues")}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      window.api.utils.openOnBrowser("https://github.com/XurxoMF/vs-launcher/issues")
+                                      window.api.utils.openOnBrowser("https://github.com/UndeadBulwark/hearth/issues")
                                     }}
                                     className="text-vsl"
                                   >
