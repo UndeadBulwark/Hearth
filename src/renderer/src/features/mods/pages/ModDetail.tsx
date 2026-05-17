@@ -112,6 +112,12 @@ function ModDetail(): JSX.Element {
 
   const isFav = mod ? config.favMods.some((fm) => fm === mod.modid) : false
 
+  const resolveUrl = (value: string | null | undefined): string => {
+    if (!value) return "https://mods.vintagestory.at/web/img/mod-default.png"
+    if (value.startsWith("http")) return value
+    return `https://mods.vintagestory.at/${value}`
+  }
+
   return (
     <ScrollableContainer ref={scrollRef}>
       <div className="w-full min-h-[101%] flex flex-col gap-2">
@@ -145,7 +151,7 @@ function ModDetail(): JSX.Element {
             {/* Header */}
             <div className="relative w-full flex gap-4 rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
               <img
-                src={mod.logofile ? `https://mods.vintagestory.at/${mod.logofile}` : "https://mods.vintagestory.at/web/img/mod-default.png"}
+                src={resolveUrl(mod.logofile)}
                 alt={mod.name}
                 className="w-24 h-24 object-cover rounded-sm shrink-0"
               />
@@ -286,7 +292,7 @@ function ModDetail(): JSX.Element {
                   {mod.screenshots.map((ss) => (
                     <img
                       key={ss.fileid}
-                      src={`https://mods.vintagestory.at/${ss.mainfile}`}
+                      src={resolveUrl(ss.mainfile)}
                       alt={ss.filename}
                       className="h-40 rounded-sm object-cover shrink-0"
                       loading="lazy"
