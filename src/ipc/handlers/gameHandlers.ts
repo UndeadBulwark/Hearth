@@ -31,12 +31,11 @@ ipcMain.handle(
         if (files.includes("Vintagestory")) {
           logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory apphost found.`)
           command = join(version.path, "Vintagestory")
-          params = [`--dataPath=${installation.path}`, installation.startParams]
-          if (installation.mesaGlThread) env = { ...env, MESA_GLTHREAD: "true" }
+          params = [`--dataPath=${installation.path}`, installation.startParams].filter(Boolean)
         } else if (files.includes("Vintagestory.exe")) {
           logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory.exe found.`)
           command = "dotnet"
-          params = [join(version.path, "Vintagestory.exe"), `--dataPath=${installation.path}`, installation.startParams]
+          params = [join(version.path, "Vintagestory.exe"), `--dataPath=${installation.path}`, installation.startParams].filter(Boolean)
         } else {
           logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Couldn't find a way to run Vintage Story, aborting...`)
           return false
@@ -55,7 +54,7 @@ ipcMain.handle(
         if (files.includes("Vintagestory.exe")) {
           logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintagestory found.`)
           command = join(version.path, "Vintagestory.exe")
-          params = [`--dataPath=${installation.path}`, installation.startParams]
+          params = [`--dataPath=${installation.path}`, installation.startParams].filter(Boolean)
         } else {
           logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Couldn't find a way to run Vintage Story, aborting...`)
           return false
@@ -71,6 +70,22 @@ ipcMain.handle(
     } else {
       logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Not platform detected.`)
       return false
+    }
+
+    if (installation.mesaGlThread) {
+      logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] mesaGlThread enabled for this installation.`)
+      env = { ...env, MESA_GLTHREAD: "true" }
+    }
+
+    if (installation.mesaNoError) {
+      logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] mesaNoError enabled for this installation.`)
+      env = { ...env, MESA_NO_ERROR: "1" }
+    }
+
+    if (os.platform() === "linux" && installation.gameMode) {
+      logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] gameMode enabled for this installation. Prepending gamemoderun.`)
+      params = [command, ...params]
+      command = "gamemoderun"
     }
 
     let account: AccountType | null = null
@@ -101,48 +116,59 @@ ipcMain.handle(
       }
     }
 
-    if (command && params) {
-      return new Promise((resolve, reject) => {
-        if (account) {
-          logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Logged in. Setting session keys.`)
+    async function writeClientSettings(account: AccountType): Promise<void> {
+      try {
+        const clientsettingsPath = join(installation.path, "clientsettings.json")
 
-          !(async (): Promise<void> => {
+        if (!fse.existsSync(clientsettingsPath)) {
+          fse.ensureFileSync(clientsettingsPath)
+          fse.writeJSONSync(clientsettingsPath, {
+            stringSettings: {
+              mptoken: account.mptoken,
+              sessionkey: account.sessionKey,
+              sessionsignature: account.sessionSignature,
+              useremail: account.email,
+              entitlements: account.playerEntitlements,
+              playeruid: account.playerUid,
+              playername: account.playerName,
+              hostgameserver: account.hostGameServer
+            }
+          })
+        } else {
+          const clientsettings = (() => {
             try {
-              const clientsettingsPath = join(installation.path, "clientsettings.json")
-
-              if (!fse.existsSync(clientsettingsPath)) {
-                fse.ensureFileSync(clientsettingsPath)
-                fse.writeJSONSync(clientsettingsPath, {
-                  stringSettings: {
-                    mptoken: account!.mptoken,
-                    sessionkey: account!.sessionKey,
-                    sessionsignature: account!.sessionSignature,
-                    useremail: account!.email,
-                    entitlements: account!.playerEntitlements,
-                    playeruid: account!.playerUid,
-                    playername: account!.playerName,
-                    hostgameserver: account!.hostGameServer
-                  }
-                })
-              } else {
-                const clientsettings = fse.readJSONSync(clientsettingsPath, "utf-8")
-
-                clientsettings["stringSettings"]["mptoken"] = account!.mptoken
-                clientsettings["stringSettings"]["sessionkey"] = account!.sessionKey
-                clientsettings["stringSettings"]["sessionsignature"] = account!.sessionSignature
-                clientsettings["stringSettings"]["useremail"] = account!.email
-                clientsettings["stringSettings"]["entitlements"] = account!.playerEntitlements
-                clientsettings["stringSettings"]["playeruid"] = account!.playerUid
-                clientsettings["stringSettings"]["playername"] = account!.playerName
-                clientsettings["stringSettings"]["hostgameserver"] = account!.hostGameServer
-
-                fse.writeJSONSync(clientsettingsPath, clientsettings)
-              }
-            } catch (err) {
-              logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Error setting login session keys.`)
-              logMessage("debug", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Error setting login session keys: ${err}`)
+              return fse.readJSONSync(clientsettingsPath, "utf-8")
+            } catch {
+              return {}
             }
           })()
+
+          if (!clientsettings.stringSettings || typeof clientsettings.stringSettings !== "object") {
+            clientsettings.stringSettings = {}
+          }
+
+          clientsettings.stringSettings["mptoken"] = account.mptoken
+          clientsettings.stringSettings["sessionkey"] = account.sessionKey
+          clientsettings.stringSettings["sessionsignature"] = account.sessionSignature
+          clientsettings.stringSettings["useremail"] = account.email
+          clientsettings.stringSettings["entitlements"] = account.playerEntitlements
+          clientsettings.stringSettings["playeruid"] = account.playerUid
+          clientsettings.stringSettings["playername"] = account.playerName
+          clientsettings.stringSettings["hostgameserver"] = account.hostGameServer
+
+          fse.writeJSONSync(clientsettingsPath, clientsettings)
+        }
+      } catch (err) {
+        logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Error setting login session keys.`)
+        logMessage("debug", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Error setting login session keys: ${err}`)
+      }
+    }
+
+    if (command && params) {
+      return new Promise(async (resolve, reject) => {
+        if (account) {
+          logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Logged in. Setting session keys.`)
+          await writeClientSettings(account)
         }
 
         logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Running Vintagestory with ${command} + ${params.join(" + ")}.`)

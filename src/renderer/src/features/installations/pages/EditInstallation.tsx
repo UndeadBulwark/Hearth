@@ -54,6 +54,8 @@ function EditInslallation(): JSX.Element {
   const [backupsAuto, setBackupsAuto] = useState<boolean>(false)
   const [compressionLevel, setCompressionLevel] = useState<number>(6)
   const [mesaGlThread, setMesaGlThread] = useState<boolean>(false)
+  const [mesaNoError, setMesaNoError] = useState<boolean>(false)
+  const [gameMode, setGameMode] = useState<boolean>(false)
   const [envVars, setEnvVars] = useState<string>("")
 
   const [addIcon, setAddIcon] = useState<boolean>(false)
@@ -73,6 +75,8 @@ function EditInslallation(): JSX.Element {
     setBackupsAuto(installation?.backupsAuto ?? false)
     setCompressionLevel(installation?.compressionLevel ?? 6)
     setMesaGlThread(installation?.mesaGlThread ?? false)
+    setMesaNoError(installation?.mesaNoError ?? false)
+    setGameMode(installation?.gameMode ?? false)
     setEnvVars(installation?.envVars ?? "")
   }, [installation])
 
@@ -91,7 +95,7 @@ function EditInslallation(): JSX.Element {
     try {
       configDispatch({
         type: CONFIG_ACTIONS.EDIT_INSTALLATION,
-        payload: { id, updates: { name, icon: icon.id, version: version.version, startParams, backupsAuto, backupsLimit, compressionLevel, mesaGlThread, envVars } }
+        payload: { id, updates: { name, icon: icon.id, version: version.version, startParams, backupsAuto, backupsLimit, compressionLevel, mesaGlThread, mesaNoError, gameMode, envVars } }
       })
       addNotification(t("features.installations.installationSuccessfullyEdited"), "success")
       navigate("/installations")
@@ -358,6 +362,32 @@ function EditInslallation(): JSX.Element {
                     <FormFieldGroupWithDescription alignment="x">
                       <FormToggle title={t("features.installations.mesaGlThreadDesc")} value={mesaGlThread} onChange={setMesaGlThread} />
                       <FormFieldDescription content={t("features.installations.mesaGlThreadDesc")} />
+                    </FormFieldGroupWithDescription>
+                  </FormBody>
+                </FromGroup>
+
+                <FromGroup className="items-center">
+                  <FormHead>
+                    <FormLabel content={t("features.installations.mesaNoError")} className="max-h-6" />
+                  </FormHead>
+
+                  <FormBody>
+                    <FormFieldGroupWithDescription alignment="x">
+                      <FormToggle title={t("features.installations.mesaNoErrorDesc")} value={mesaNoError} onChange={setMesaNoError} />
+                      <FormFieldDescription content={t("features.installations.mesaNoErrorDesc")} />
+                    </FormFieldGroupWithDescription>
+                  </FormBody>
+                </FromGroup>
+
+                <FromGroup className="items-center">
+                  <FormHead>
+                    <FormLabel content={t("features.installations.gameMode")} className="max-h-6" />
+                  </FormHead>
+
+                  <FormBody>
+                    <FormFieldGroupWithDescription alignment="x">
+                      <FormToggle title={t("features.installations.gameModeDesc")} value={gameMode} onChange={setGameMode} />
+                      <FormFieldDescription content={t("features.installations.gameModeDesc")} />
                     </FormFieldGroupWithDescription>
                   </FormBody>
                 </FromGroup>

@@ -55,6 +55,8 @@ function AddInslallation(): JSX.Element {
   const [backupsAuto, setBackupsAuto] = useState<boolean>(false)
   const [compressionLevel, setCompressionLevel] = useState<number>(6)
   const [mesaGlThread, setMEsaGlThread] = useState<boolean>(false)
+  const [mesaNoError, setMesaNoError] = useState<boolean>(false)
+  const [gameMode, setGameMode] = useState<boolean>(false)
   const [envVars, setEnvVars] = useState<string>("")
 
   const [addIcon, setAddIcon] = useState<boolean>(false)
@@ -92,6 +94,8 @@ function AddInslallation(): JSX.Element {
         lastTimePlayed: -1,
         totalTimePlayed: 0,
         mesaGlThread,
+        mesaNoError,
+        gameMode,
         envVars,
         _modsCount: 0
       }
@@ -403,6 +407,32 @@ function AddInslallation(): JSX.Element {
                 <FormFieldGroupWithDescription alignment="x">
                   <FormToggle title={t("features.installations.mesaGlThreadDesc")} value={mesaGlThread} onChange={setMEsaGlThread} />
                   <FormFieldDescription content={t("features.installations.mesaGlThreadDesc")} />
+                </FormFieldGroupWithDescription>
+              </FormBody>
+            </FromGroup>
+
+            <FromGroup className="items-center">
+              <FormHead>
+                <FormLabel content={t("features.installations.mesaNoError")} className="max-h-6" />
+              </FormHead>
+
+              <FormBody>
+                <FormFieldGroupWithDescription alignment="x">
+                  <FormToggle title={t("features.installations.mesaNoErrorDesc")} value={mesaNoError} onChange={setMesaNoError} />
+                  <FormFieldDescription content={t("features.installations.mesaNoErrorDesc")} />
+                </FormFieldGroupWithDescription>
+              </FormBody>
+            </FromGroup>
+
+            <FromGroup className="items-center">
+              <FormHead>
+                <FormLabel content={t("features.installations.gameMode")} className="max-h-6" />
+              </FormHead>
+
+              <FormBody>
+                <FormFieldGroupWithDescription alignment="x">
+                  <FormToggle title={t("features.installations.gameModeDesc")} value={gameMode} onChange={setGameMode} />
+                  <FormFieldDescription content={t("features.installations.gameModeDesc")} />
                 </FormFieldGroupWithDescription>
               </FormBody>
             </FromGroup>

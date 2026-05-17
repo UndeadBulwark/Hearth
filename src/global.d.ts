@@ -77,6 +77,8 @@ declare global {
     lastTimePlayed: number
     totalTimePlayed: number
     mesaGlThread: boolean
+    mesaNoError: boolean
+    gameMode: boolean
     envVars: string
     _modsCount?: number
     _playing?: boolean

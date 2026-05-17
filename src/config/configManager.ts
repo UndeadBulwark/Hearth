@@ -15,9 +15,10 @@ import { v4 as uuidv4 } from "uuid"
  * 1.5: 1.4.1 -> 1.4.3
  * 1.6: 1.4.4
  * 1.7: 1.5.0 -> (multi-account support)
+ * 1.8: 1.6.0 -> (linux performance toggles: mesaNoError, gameMode)
  */
 const defaultConfig: ConfigType = {
-  version: 1.7,
+  version: 1.8,
   lastUsedInstallation: null,
   lastUsedAccountId: null,
   defaultInstallationsFolder: join(app.getPath("appData"), "VSLInstallations"),
@@ -54,6 +55,8 @@ const defaultInstallation: InstallationType = {
   lastTimePlayed: -1,
   totalTimePlayed: 0,
   mesaGlThread: false,
+  mesaNoError: false,
+  gameMode: false,
   envVars: ""
 }
 
@@ -125,6 +128,8 @@ async function ensureConfigProperties(config: ConfigType): Promise<ConfigType> {
     lastTimePlayed: installation.lastTimePlayed ?? defaultInstallation.lastTimePlayed,
     totalTimePlayed: installation.totalTimePlayed ?? defaultInstallation.totalTimePlayed,
     mesaGlThread: installation.mesaGlThread ?? defaultInstallation.mesaGlThread,
+    mesaNoError: installation.mesaNoError ?? defaultInstallation.mesaNoError,
+    gameMode: installation.gameMode ?? defaultInstallation.gameMode,
     envVars: installation.envVars ?? defaultInstallation.envVars
   }))
 
