@@ -29,6 +29,7 @@ import AddVersion from "@renderer/features/versions/pages/AddVersion"
 import LookForAVersion from "@renderer/features/versions/pages/LookForAVersion"
 
 import ListMods from "@renderer/features/mods/pages/ListMods"
+import ModDetail from "@renderer/features/mods/pages/ModDetail"
 
 import ConfigPage from "@renderer/features/config/pages/ConfigPage"
 
@@ -91,6 +92,7 @@ function AnimatedRoutes(): JSX.Element {
         <Route path="/versions/add" element={<AnimatedRoute element={<AddVersion />} />} />
         <Route path="/versions/look-for-a-version" element={<AnimatedRoute element={<LookForAVersion />} />} />
         <Route path="/mods" element={<AnimatedRoute element={<ListMods />} />} />
+        <Route path="/mods/:modid" element={<AnimatedRoute element={<ModDetail />} />} />
         <Route path="/config" element={<AnimatedRoute element={<ConfigPage />} />} />
         <Route path="/info-and-help" element={<AnimatedRoute element={<InfoAndHelpPage />} />} />
         <Route path="/downloads" element={<AnimatedRoute element={<DownloadsPage />} />} />

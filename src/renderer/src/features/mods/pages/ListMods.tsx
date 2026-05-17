@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react"
+import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { PiDownloadDuotone, PiStarDuotone, PiChatCenteredTextDuotone, PiEraserDuotone, PiUserCircleDuotone } from "react-icons/pi"
 import { FiExternalLink, FiLoader } from "react-icons/fi"
@@ -12,10 +13,8 @@ import { useGetInstalledMods } from "@renderer/features/mods/hooks/useGetInstall
 
 import { FormButton, FormInputText } from "@renderer/components/ui/FormComponents"
 import ScrollableContainer from "@renderer/components/ui/ScrollableContainer"
-import { GridGroup, GridItem, GridWrapper } from "@renderer/components/ui/Grid"
-import InstallModPopup from "@renderer/features/mods/components/InstallModPopup"
+import { ListGroup, ListItem, ListWrapper } from "@renderer/components/ui/List"
 import { StickyMenuWrapper, StickyMenuGroupWrapper, StickyMenuGroup, StickyMenuBreadcrumbs, GoBackButton, ReloadButton, GoToTopButton } from "@renderer/components/ui/StickyMenu"
-import { ThinSeparator } from "@renderer/components/ui/ListSeparators"
 import AuthorFilter from "@renderer/features/mods/components/AuthorFilter"
 import VersionsFilter from "@renderer/features/mods/components/VersionsFilter"
 import TagsFilter from "@renderer/features/mods/components/TagsFilter"
@@ -25,6 +24,7 @@ import InstalledFilter from "@renderer/features/mods/components/InstalledFilter"
 
 function ListMods(): JSX.Element {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { config, configDispatch } = useConfigContext()
   const { addNotification } = useNotificationsContext()
 
@@ -51,8 +51,6 @@ function ListMods(): JSX.Element {
   const [orderByOrder, setOrderByOrder] = useState<string>("desc")
 
   const [searching, setSearching] = useState<boolean>(true)
-
-  const [modToInstall, setModToInstall] = useState<DownloadableModOnListType | null>(null)
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -98,7 +96,6 @@ function ListMods(): JSX.Element {
   }, [installationInstalledMods])
 
   async function triggerQueryMods(resetScroll: boolean = true): Promise<void> {
-    // If the installed mods are not loaded yet, skip, it'll be run again when the mods are loaded
     if (!installationInstalledMods) {
       window.api.utils.logMessage("info", "[front] [mods] [features/mods/pages/ListMods.tsx] [triggerQueryMods] Installed mods not loaded yet, skipping query")
       return
@@ -143,7 +140,6 @@ function ListMods(): JSX.Element {
       path: installation.path
     })
 
-    // Set the installed mods count for the selected Installation. We had to get the mods anyway so... 2x1
     const totalMods = mods.errors.length + mods.mods.length
     configDispatch({ type: CONFIG_ACTIONS.EDIT_INSTALLATION, payload: { id: installation.id, updates: { _modsCount: totalMods } } })
 
@@ -210,107 +206,103 @@ function ListMods(): JSX.Element {
           </StickyMenuGroupWrapper>
         </StickyMenuWrapper>
 
-        <GridWrapper className="my-auto">
-          <GridGroup>
+        <ListWrapper className="my-auto">
+          <ListGroup>
             {modsList.length < 1 ? (
               <div className="w-full flex flex-col items-center justify-center gap-2 rounded-sm p-4">
                 {searching ? <FiLoader className="animate-spin text-4xl text-zinc-400" /> : t("features.mods.noMatchingFilters")}
               </div>
             ) : (
-              modsList.slice(0, visibleMods).map((mod) => (
-                <GridItem
-                  key={mod.modid}
-                  onClick={() => {
-                    if (!installation) return addNotification(t("features.installations.noInstallationSelected"), "error")
-                    setModToInstall(mod)
-                  }}
-                  selected={installationInstalledMods?.some((iMod) => mod.modidstrs.some((modidstr) => modidstr === iMod.modid.toLocaleLowerCase() || modidstr === iMod.modid))}
-                  size="w-[18rem] max-w-[26rem]"
-                  className="group overflow-hidden"
-                >
-                  <div className="relative w-full aspect-[3/2]">
-                    <img src={mod.logo ? `${mod.logo}` : "https://mods.vintagestory.at/web/img/mod-default.png"} alt={mod.name} className="w-full h-full object-cover object-top" />
+              modsList.slice(0, visibleMods).map((mod) => {
+                const isInstalled = installationInstalledMods?.some((iMod) => mod.modidstrs.some((modidstr) => modidstr === iMod.modid.toLocaleLowerCase() || modidstr === iMod.modid))
+                return (
+                  <ListItem
+                    key={mod.modid}
+                    onClick={() => navigate(`/mods/${mod.modid}`)}
+                    className="group"
+                  >
+                    <div className="flex items-center gap-3 p-2 cursor-pointer">
+                      <img
+                        src={mod.logo ? `${mod.logo}` : "https://mods.vintagestory.at/web/img/mod-default.png"}
+                        alt={mod.name}
+                        className="w-12 h-12 object-cover object-top rounded-sm shrink-0"
+                      />
 
-                    <div className="absolute w-full top-0 flex items-center justify-between p-1">
-                      <FormButton
-                        title={t("generic.favorite")}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (config.favMods.some((modid) => modid === mod.modid)) {
-                            configDispatch({ type: CONFIG_ACTIONS.REMOVE_FAV_MOD, payload: { modid: mod.modid } })
-                          } else {
-                            configDispatch({ type: CONFIG_ACTIONS.ADD_FAV_MOD, payload: { modid: mod.modid } })
-                          }
-                        }}
-                        className={clsx("p-1 text-lg", !config.favMods.some((modid) => modid === mod.modid) && "opacity-0 group-hover:opacity-100 duration-200")}
-                        type={config.favMods.some((modid) => modid === mod.modid) ? "warn" : "normal"}
-                      >
-                        <PiStarDuotone />
-                      </FormButton>
+                      <div className="flex-1 flex flex-col gap-1 overflow-hidden">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold overflow-hidden whitespace-nowrap text-ellipsis" title={mod.name}>
+                            {mod.name}
+                          </p>
+                          {isInstalled && (
+                            <span className="px-1.5 py-0.5 rounded-sm bg-green-900/30 text-green-300 text-[10px] font-medium shrink-0">
+                              {t("features.mods.installedShort")}
+                            </span>
+                          )}
+                          <span className={clsx("px-1.5 py-0.5 rounded-sm text-[10px] font-medium shrink-0", mod.side === "server" && "bg-blue-900/30 text-blue-300", mod.side === "client" && "bg-green-900/30 text-green-300", mod.side === "both" && "bg-purple-900/30 text-purple-300")}>
+                            {mod.side}
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-400 overflow-hidden whitespace-nowrap text-ellipsis" title={mod.summary ?? ""}>
+                          {mod.summary}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-zinc-500">
+                          <span className="flex items-center gap-1">
+                            <PiUserCircleDuotone className="opacity-50" />
+                            {mod.author}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <PiDownloadDuotone className="opacity-50" />
+                            {Number(mod.downloads) > 10000 ? `${Math.floor(Number(mod.downloads) / 1000)}K` : Number(mod.downloads)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <PiStarDuotone className="opacity-50" />
+                            {Number(mod.follows) > 10000 ? `${Math.floor(Number(mod.follows) / 1000)}K` : Number(mod.follows)}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <PiChatCenteredTextDuotone className="opacity-50" />
+                            {Number(mod.comments) > 10000 ? `${Math.floor(Number(mod.comments) / 1000)}K` : Number(mod.comments)}
+                          </span>
+                          <span className="text-zinc-600">
+                            {new Date(mod.lastreleased).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
 
-                      <FormButton
-                        title={t("features.mods.openOnTheModDB")}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          window.api.utils.openOnBrowser(`https://mods.vintagestory.at/show/mod/${mod.assetid}`)
-                        }}
-                        className="p-1 text-lg opacity-0 group-hover:opacity-100 duration-200"
-                      >
-                        <FiExternalLink />
-                      </FormButton>
+                      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 duration-200">
+                        <FormButton
+                          title={t("generic.favorite")}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (config.favMods.some((modid) => modid === mod.modid)) {
+                              configDispatch({ type: CONFIG_ACTIONS.REMOVE_FAV_MOD, payload: { modid: mod.modid } })
+                            } else {
+                              configDispatch({ type: CONFIG_ACTIONS.ADD_FAV_MOD, payload: { modid: mod.modid } })
+                            }
+                          }}
+                          type={config.favMods.some((modid) => modid === mod.modid) ? "warn" : "normal"}
+                          className="w-7 h-7 text-base"
+                        >
+                          <PiStarDuotone />
+                        </FormButton>
+
+                        <FormButton
+                          title={t("features.mods.openOnTheModDB")}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.api.utils.openOnBrowser(`https://mods.vintagestory.at/show/mod/${mod.assetid}`)
+                          }}
+                          className="w-7 h-7 text-base"
+                        >
+                          <FiExternalLink />
+                        </FormButton>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="w-full aspect-[3/1] flex text-sm">
-                    <div className="shrink-0 w-1/3 flex flex-col gap-1 px-2 py-1 overflow-hidden">
-                      <p className="flex items-center gap-1" title={mod.author}>
-                        <PiUserCircleDuotone className="shrink-0 opacity-50" />
-                        <span className="overflow-hidden whitespace-nowrap text-ellipsis">{mod.author}</span>
-                      </p>
-                      <p className="flex items-center gap-1">
-                        <PiDownloadDuotone className="shrink-0 opacity-50" />
-                        <span>{Number(mod.downloads) > 10000 ? `${Math.floor(Number(mod.downloads) / 1000)}K` : Number(mod.downloads)}</span>
-                      </p>
-                      <p className="flex items-center gap-1">
-                        <PiStarDuotone className="shrink-0 opacity-50" />
-                        <span>{Number(mod.follows) > 10000 ? `${Math.floor(Number(mod.follows) / 1000)}K` : Number(mod.follows)}</span>
-                      </p>
-                      <p className="flex items-center gap-1">
-                        <PiChatCenteredTextDuotone className="shrink-0 opacity-50" />
-                        <span>{Number(mod.comments) > 10000 ? `${Math.floor(Number(mod.comments) / 1000)}K` : Number(mod.comments)}</span>
-                      </p>
-                    </div>
-
-                    <ThinSeparator />
-
-                    <div className="w-full flex flex-col gap-1 px-2 py-1 overflow-hidden">
-                      <p className="text-base font-bold overflow-hidden whitespace-nowrap text-ellipsis" title={mod.name}>
-                        {mod.name}
-                      </p>
-                      <p className="text-zinc-400 line-clamp-3" title={mod.summary ?? ""}>
-                        {mod.summary}
-                      </p>
-                    </div>
-                  </div>
-                </GridItem>
-              ))
+                  </ListItem>
+                )
+              })
             )}
-          </GridGroup>
-        </GridWrapper>
-
-        <InstallModPopup
-          modToInstall={modToInstall?.modid || null}
-          setModToInstall={() => setModToInstall(null)}
-          installation={
-            installation && {
-              installation: installation,
-              oldMod: installationInstalledMods?.find((iMod) => modToInstall?.modidstrs.some((modidstr) => modidstr === iMod.modid))
-            }
-          }
-          onFinishInstallation={() => {
-            triggerGetInstalledMods()
-          }}
-        />
+          </ListGroup>
+        </ListWrapper>
       </div>
     </ScrollableContainer>
   )

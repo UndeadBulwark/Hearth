@@ -219,8 +219,21 @@
    "updatingInstalledMods": "Updating installed Mods!",
    "errorUpdatingMod": "An error has occurred updating the Mod {mod}!",
    "errorUpdatingMods": "An error has occurred updating the Mods!",
-   "updateAllButton": "Update all",
-   "modsUpdatedSuccessfully": "All the Mods were updated successfully!"
+    "updateAllButton": "Update all",
+    "modsUpdatedSuccessfully": "All the Mods were updated successfully!",
+    "installedShort": "Installed",
+    "installInto": "Install into",
+    "installedVersion": "Installed version",
+    "description": "Description",
+    "screenshots": "Screenshots",
+    "externalLinks": "External Links",
+    "homepage": "Website",
+    "sourceCode": "Source Code",
+    "issueTracker": "Issue Tracker",
+    "wiki": "Wiki",
+    "trailer": "Trailer",
+    "releases": "Releases",
+    "noModFound": "Mod not found!"
   },
   "dotnet": {
    "runtimeDownloadFailed": "Failed to download the .NET runtime. Please try again.",

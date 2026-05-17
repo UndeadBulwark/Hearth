@@ -151,6 +151,7 @@ declare global {
     trendingpoints: number
     comments: number
     side: string
+    modidstrs: string[]
     tuype: string
     createdat: string
     lasmodified: string
