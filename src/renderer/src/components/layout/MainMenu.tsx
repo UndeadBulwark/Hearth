@@ -50,6 +50,8 @@ function MainMenu(): JSX.Element {
 
   const [selectedInstallation, setSelectedInstallation] = useState<InstallationType | undefined>(undefined)
   const [runningDots, setRunningDots] = useState(0)
+  const [killHover, setKillHover] = useState(false)
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
   const [runtimeDialogOpen, setRuntimeDialogOpen] = useState(false)
   const [pendingRuntime, setPendingRuntime] = useState<{ id: string; name: string; size: number } | null>(null)
   const [runtimeDownloading, setRuntimeDownloading] = useState(false)
@@ -182,6 +184,23 @@ function MainMenu(): JSX.Element {
     }
   }
 
+  async function handleKillGame(): Promise<void> {
+    if (!selectedInstallation) return
+
+    const killed = await window.api.gameManager.killGame(selectedInstallation.id)
+    if (killed) {
+      configDispatch({ type: CONFIG_ACTIONS.EDIT_INSTALLATION, payload: { id: selectedInstallation.id, updates: { _playing: false } } })
+      const gameVersion = config.gameVersions.find((gv) => gv.version === selectedInstallation.version)
+      if (gameVersion) {
+        configDispatch({ type: CONFIG_ACTIONS.EDIT_GAME_VERSION, payload: { version: gameVersion.version, updates: { _playing: false } } })
+      }
+      addNotification(t("features.installations.killSuccess"), "success")
+    } else {
+      addNotification(t("features.installations.killFailed"), "error")
+    }
+    setCloseConfirmOpen(false)
+  }
+
   const currentInstallation = config.installations.find((i) => i.id === config.lastUsedInstallation)
 
   return (
@@ -247,6 +266,24 @@ function MainMenu(): JSX.Element {
         </div>
       </PopupDialogPanel>
 
+      <PopupDialogPanel
+        title={t("features.installations.closeVintageStory")}
+        isOpen={closeConfirmOpen}
+        close={() => setCloseConfirmOpen(false)}
+      >
+        <div className="flex flex-col gap-4 items-center">
+          <p>{t("features.installations.confirmCloseVintageStory")}</p>
+          <div className="flex gap-4">
+            <NormalButton title={t("generic.cancel")} onClick={() => setCloseConfirmOpen(false)}>
+              {t("generic.cancel")}
+            </NormalButton>
+            <NormalButton title={t("features.installations.closeVintageStory")} onClick={handleKillGame} className="bg-red-700 hover:bg-red-600">
+              {t("features.installations.closeVintageStory")}
+            </NormalButton>
+          </div>
+        </div>
+      </PopupDialogPanel>
+
       <div className="flex flex-col gap-2">
         {/* Unified Launch Bar */}
         {config.installations.length < 1 ? (
@@ -267,8 +304,19 @@ function MainMenu(): JSX.Element {
               <div className="relative w-full">
                 <div className="relative w-full h-14 flex rounded-sm overflow-hidden bg-[#a06828] shadow-sm shadow-zinc-950/50">
                   {selectedInstallation?._playing && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50 backdrop-blur-[1px] rounded-sm">
-                      <span className="text-sm font-semibold text-white/90">Running{" ".concat(".".repeat(runningDots + 1))}</span>
+                    <div
+                      className={clsx(
+                        "absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px] rounded-sm cursor-pointer transition-colors duration-200",
+                        killHover ? "bg-red-900/70" : "bg-black/50"
+                      )}
+                      onMouseEnter={() => setKillHover(true)}
+                      onMouseLeave={() => setKillHover(false)}
+                      onClick={() => setCloseConfirmOpen(true)}
+                      title={t("features.installations.closeVintageStory")}
+                    >
+                      <span className="text-sm font-semibold text-white/90">
+                        {killHover ? t("features.installations.closeVintageStory") : t("features.installations.running") + " " + ".".repeat(runningDots + 1)}
+                      </span>
                     </div>
                   )}
                   {/* Play trigger — left/middle of the bar */}

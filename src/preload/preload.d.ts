@@ -48,6 +48,7 @@ declare global {
     gameManager: {
       executeGame: (version: GameVersionType, installation: InstallationType, accountId: string | null, dotnetEnv?: Record<string, string>) => Promise<boolean>
       lookForAGameVersion: (path: string) => Promise<{ exists: boolean; installedGameVersion: string | undefined }>
+      killGame: (installationId: string) => Promise<boolean>
     }
     netManager: {
       queryURL: (url: string) => Promise<string>

@@ -1,11 +1,42 @@
 import { ipcMain } from "electron"
-import { spawn } from "child_process"
+import { spawn, ChildProcess } from "child_process"
 import fse from "fs-extra"
 import { join } from "path"
 import os from "os"
 import { logMessage } from "@src/utils/logManager"
 import { IPC_CHANNELS } from "@src/ipc/ipcChannels"
 import { getAccountSession } from "@src/utils/accountSessionManager"
+
+const runningGames = new Map<string, ChildProcess>()
+
+ipcMain.handle(
+  IPC_CHANNELS.GAME_MANAGER.KILL_GAME,
+  async (_event, installationId: string): Promise<boolean> => {
+    logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [KILL_GAME] Requested to kill game for installation ${installationId}.`)
+
+    const process = runningGames.get(installationId)
+    if (!process) {
+      logMessage("warn", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [KILL_GAME] No running game found for installation ${installationId}.`)
+      return false
+    }
+
+    try {
+      const killed = process.kill("SIGTERM")
+      if (!killed) {
+        logMessage("warn", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [KILL_GAME] SIGTERM failed for installation ${installationId}. Trying SIGKILL.`)
+        process.kill("SIGKILL")
+      }
+
+      runningGames.delete(installationId)
+      logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [KILL_GAME] Killed game for installation ${installationId}.`)
+      return true
+    } catch (err) {
+      logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [KILL_GAME] Error killing game for installation ${installationId}.`)
+      logMessage("verbose", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [KILL_GAME] ${err}`)
+      return false
+    }
+  }
+)
 
 ipcMain.handle(
   IPC_CHANNELS.GAME_MANAGER.EXECUTE_GAME,
@@ -174,6 +205,7 @@ ipcMain.handle(
         logMessage("info", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Running Vintagestory with ${command} + ${params.join(" + ")}.`)
 
         const externalApp = spawn(command, params, { env, cwd: version.path })
+        runningGames.set(installation.id, externalApp)
 
         externalApp.stdout.on("data", (data) => {
           logMessage("verbose", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] ${data}`)
@@ -187,6 +219,7 @@ ipcMain.handle(
         })
 
         externalApp.on("close", (code) => {
+          runningGames.delete(installation.id)
           if (code !== 0 && lastStderrLine) {
             logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Vintage Story crashed with code ${code}: ${lastStderrLine}`)
           }
@@ -195,6 +228,7 @@ ipcMain.handle(
         })
 
         externalApp.on("error", (error) => {
+          runningGames.delete(installation.id)
           logMessage("error", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] Error running Vintage Story.`)
           logMessage("verbose", `[back] [ipc] [ipc/handlers/gameHandlers.ts] [EXECUTE_GAME] ${error}`)
           reject(false)
