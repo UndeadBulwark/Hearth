@@ -191,7 +191,7 @@ function ModDetail(): JSX.Element {
         ) : (
           <div className="w-full flex flex-col gap-4 p-2">
             {/* Header */}
-            <div className="relative w-full flex gap-4 rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
+            <div className="relative w-full flex gap-4 rounded-sm p-4 bg-panel-parchment backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
               <img
                 src={resolveUrl(mod.logofile)}
                 alt={mod.name}
@@ -317,7 +317,7 @@ function ModDetail(): JSX.Element {
 
             {/* Description */}
             {mod.text && (
-              <div className="rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
+              <div className="rounded-sm p-4 bg-panel-parchment backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
                 <h2 className="text-lg font-bold mb-2">{t("features.mods.description")}</h2>
                 <div
                   className="text-sm text-zinc-300 max-w-none"
@@ -343,7 +343,7 @@ function ModDetail(): JSX.Element {
 
             {/* Screenshots */}
             {mod.screenshots && mod.screenshots.length > 0 && (
-              <div className="rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
+              <div className="rounded-sm p-4 bg-panel-parchment backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
                 <h2 className="text-lg font-bold mb-2">{t("features.mods.screenshots")}</h2>
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {mod.screenshots.map((ss) => (
@@ -361,7 +361,7 @@ function ModDetail(): JSX.Element {
 
             {/* External links — merge top-level fields + detected links from description */}
             {(topLinks.homepage || topLinks.sourcecode || topLinks.issuetracker || topLinks.wiki || topLinks.trailer || extractedLinks.homepage || extractedLinks.sourcecode || extractedLinks.discord || extractedLinks.patreon || extractedLinks.kofi || extractedLinks.youtube || extractedLinks.curseforge) && (
-              <div className="rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
+              <div className="rounded-sm p-4 bg-panel-parchment backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
                 <h2 className="text-lg font-bold mb-2">{t("features.mods.externalLinks")}</h2>
                 <div className="flex flex-wrap gap-2">
                   {(topLinks.homepage || extractedLinks.homepage) && (
@@ -414,7 +414,7 @@ function ModDetail(): JSX.Element {
             )}
 
             {/* Releases */}
-            <div className="rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
+            <div className="rounded-sm p-4 bg-panel-parchment backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
               <h2 className="text-lg font-bold mb-2">{t("features.mods.releases")}</h2>
               <TableWrapper>
                 <TableHead>

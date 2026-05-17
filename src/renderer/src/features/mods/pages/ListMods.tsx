@@ -206,7 +206,7 @@ function ListMods(): JSX.Element {
           </StickyMenuGroupWrapper>
         </StickyMenuWrapper>
 
-        <ListWrapper className="w-full p-0 rounded-none before:rounded-none before:bg-transparent before:backdrop-blur-none before:border-0 before:shadow-none">
+        <ListWrapper className="w-full p-0 rounded-none before:rounded-none before:bg-panel-parchment before:backdrop-blur-md before:border-zinc-400/5 before:shadow-sm before:shadow-zinc-950/50">
           <ListGroup>
             {modsList.length < 1 ? (
               <div className="w-full flex flex-col items-center justify-center gap-2 rounded-sm p-4">

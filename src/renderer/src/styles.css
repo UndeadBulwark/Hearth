@@ -8,6 +8,7 @@
   --color-vsd: #4f3110;
   --color-zinc-750: #313136;
   --color-zinc-850: #212122;
+  --color-panel-parchment: #1c1916;
 
   --background-image-image-vs: url("./assets/background.jpg");
 }
@@ -17,6 +18,39 @@
     scrollbar-width: none !important;
     scrollbar-color: transparent transparent !important;
   }
+}
+
+/* GitHub-style code blocks inside mod descriptions */
+pre {
+  background-color: #2a2a2b;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+  word-wrap: normal;
+  color: #d4d4d8;
+  margin: 0.5rem 0;
+}
+
+pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Inline code (not inside pre) */
+code:not(pre code) {
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-size: 0.8125rem;
+  color: #e4e4e7;
 }
 
 /* Custom scale options */
