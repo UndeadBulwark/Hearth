@@ -118,6 +118,48 @@ function ModDetail(): JSX.Element {
     return `https://mods.vintagestory.at/${value}`
   }
 
+  // Detect common URLs buried inside mod.text HTML that the API doesn't surface top-level
+  const extractedLinks = (() => {
+    const links: { homepage?: string; sourcecode?: string; discord?: string; patreon?: string; kofi?: string; youtube?: string; curseforge?: string } = {}
+    if (!mod?.text) return links
+    const html = mod.text
+
+    // Discord
+    const discordMatch = html.match(/discord\.gg\/([a-zA-Z0-9-_]+)/i) || html.match(/discord\.com\/invite\/([a-zA-Z0-9-_]+)/i)
+    if (discordMatch) links.discord = `https://discord.gg/${discordMatch[1]}`
+
+    // GitHub
+    const githubMatch = html.match(/github\.com\/([a-zA-Z0-9-_]+\/[a-zA-Z0-9-_.]+)/i)
+    if (githubMatch) links.sourcecode = `https://github.com/${githubMatch[1]}`
+
+    // YouTube
+    const youtubeMatch = html.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/i) || html.match(/youtu\.be\/([a-zA-Z0-9_-]+)/i)
+    if (youtubeMatch) links.youtube = `https://www.youtube.com/watch?v=${youtubeMatch[1]}`
+
+    // Ko-fi
+    const kofiMatch = html.match(/ko-fi\.com\/(?!widget)([a-zA-Z0-9_]+)/i)
+    if (kofiMatch) links.kofi = `https://ko-fi.com/${kofiMatch[1]}`
+
+    // Patreon
+    const patreonMatch = html.match(/patreon\.com\/([a-zA-Z0-9_]+)/i)
+    if (patreonMatch) links.patreon = `https://www.patreon.com/${patreonMatch[1]}`
+
+    // CurseForge
+    const curseforgeMatch = html.match(/curseforge\.com\/projects\/([a-zA-Z0-9_-]+)/i) || html.match(/www\.curseforge\.com\/projects\/([a-zA-Z0-9_-]+)/i)
+    if (curseforgeMatch) links.curseforge = `https://www.curseforge.com/projects/${curseforgeMatch[1]}`
+
+    return links
+  })()
+
+  // Normalize top-level URL fields (treat empty strings as missing)
+  const topLinks = {
+    homepage: mod?.homepageurl?.trim() || undefined,
+    sourcecode: mod?.sourcecodeurl?.trim() || undefined,
+    issuetracker: mod?.issuetrackerurl?.trim() || undefined,
+    wiki: mod?.wikiurl?.trim() || undefined,
+    trailer: mod?.trailervideourl?.trim() || undefined
+  }
+
   return (
     <ScrollableContainer ref={scrollRef}>
       <div className="w-full min-h-[101%] flex flex-col gap-2">
@@ -278,8 +320,23 @@ function ModDetail(): JSX.Element {
               <div className="rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
                 <h2 className="text-lg font-bold mb-2">{t("features.mods.description")}</h2>
                 <div
-                  className="text-sm text-zinc-300 prose prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5"
-                  dangerouslySetInnerHTML={{ __html: mod.text }}
+                  className="text-sm text-zinc-300 max-w-none"
+                  style={{
+                    /* Tame mod-provided HTML: cap font sizes, force images inside container, reset backgrounds */
+                  }}
+                  dangerouslySetInnerHTML={{
+                    __html: mod.text
+                      // Force all images to max-width 100% and remove any background
+                      .replace(/<img\b/g, '<img style="max-width:100%;height:auto;display:block;margin:4px 0;background:none;border:none;"')
+                      // Remove any background styles from div/span/p that mod authors might set
+                      .replace(/background(?:-\w+)?\s*:\s*[^;!}]+/gi, '')
+                      // Clamp any excessively large font sizes
+                      .replace(/font-size\s*:\s*([\d.]+)(px|pt|em|rem)/gi, (_match, size, unit) => {
+                        const num = parseFloat(size)
+                        const clamped = unit === 'px' || unit === 'pt' ? Math.min(num, 24) : Math.min(num, 1.5)
+                        return `font-size: ${clamped}${unit}`
+                      })
+                  }}
                 />
               </div>
             )}
@@ -302,34 +359,54 @@ function ModDetail(): JSX.Element {
               </div>
             )}
 
-            {/* External links */}
-            {(mod.homepageurl || mod.sourcecodeurl || mod.issuetrackerurl || mod.wikiurl || mod.trailervideourl) && (
+            {/* External links — merge top-level fields + detected links from description */}
+            {(topLinks.homepage || topLinks.sourcecode || topLinks.issuetracker || topLinks.wiki || topLinks.trailer || extractedLinks.homepage || extractedLinks.sourcecode || extractedLinks.discord || extractedLinks.patreon || extractedLinks.kofi || extractedLinks.youtube || extractedLinks.curseforge) && (
               <div className="rounded-sm p-4 bg-zinc-950/80 backdrop-blur-md border border-zinc-400/5 shadow-sm shadow-zinc-950/50">
                 <h2 className="text-lg font-bold mb-2">{t("features.mods.externalLinks")}</h2>
                 <div className="flex flex-wrap gap-2">
-                  {mod.homepageurl && (
-                    <FormButton onClick={() => window.api.utils.openOnBrowser(mod.homepageurl!)} className="text-sm" title={t("features.mods.homepage")}>
+                  {(topLinks.homepage || extractedLinks.homepage) && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(topLinks.homepage || extractedLinks.homepage!)} className="text-sm" title={t("features.mods.homepage")}>
                       {t("features.mods.homepage")}
                     </FormButton>
                   )}
-                  {mod.sourcecodeurl && (
-                    <FormButton onClick={() => window.api.utils.openOnBrowser(mod.sourcecodeurl!)} className="text-sm" title={t("features.mods.sourceCode")}>
+                  {(topLinks.sourcecode || extractedLinks.sourcecode) && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(topLinks.sourcecode || extractedLinks.sourcecode!)} className="text-sm" title={t("features.mods.sourceCode")}>
                       {t("features.mods.sourceCode")}
                     </FormButton>
                   )}
-                  {mod.issuetrackerurl && (
-                    <FormButton onClick={() => window.api.utils.openOnBrowser(mod.issuetrackerurl!)} className="text-sm" title={t("features.mods.issueTracker")}>
+                  {topLinks.issuetracker && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(topLinks.issuetracker!)} className="text-sm" title={t("features.mods.issueTracker")}>
                       {t("features.mods.issueTracker")}
                     </FormButton>
                   )}
-                  {mod.wikiurl && (
-                    <FormButton onClick={() => window.api.utils.openOnBrowser(mod.wikiurl!)} className="text-sm" title={t("features.mods.wiki")}>
+                  {topLinks.wiki && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(topLinks.wiki!)} className="text-sm" title={t("features.mods.wiki")}>
                       {t("features.mods.wiki")}
                     </FormButton>
                   )}
-                  {mod.trailervideourl && (
-                    <FormButton onClick={() => window.api.utils.openOnBrowser(mod.trailervideourl!)} className="text-sm" title={t("features.mods.trailer")}>
+                  {(topLinks.trailer || extractedLinks.youtube) && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(topLinks.trailer || extractedLinks.youtube!)} className="text-sm" title={t("features.mods.trailer")}>
                       {t("features.mods.trailer")}
+                    </FormButton>
+                  )}
+                  {extractedLinks.discord && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(extractedLinks.discord!)} className="text-sm" title={t("generic.discord")}>
+                      {t("generic.discord")}
+                    </FormButton>
+                  )}
+                  {extractedLinks.patreon && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(extractedLinks.patreon!)} className="text-sm" title={t("generic.donate")}>
+                      {t("generic.donate")}
+                    </FormButton>
+                  )}
+                  {extractedLinks.kofi && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(extractedLinks.kofi!)} className="text-sm" title="Ko-fi">
+                      Ko-fi
+                    </FormButton>
+                  )}
+                  {extractedLinks.curseforge && (
+                    <FormButton onClick={() => window.api.utils.openOnBrowser(extractedLinks.curseforge!)} className="text-sm" title="CurseForge">
+                      CurseForge
                     </FormButton>
                   )}
                 </div>

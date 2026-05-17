@@ -233,7 +233,8 @@
     "wiki": "Wiki",
     "trailer": "Trailer",
     "releases": "Releases",
-    "noModFound": "Mod not found!"
+    "noModFound": "Mod not found!",
+    "modSuccessfullyInstalled": "{{mod}} installed successfully!"
   },
   "dotnet": {
    "runtimeDownloadFailed": "Failed to download the .NET runtime. Please try again.",
