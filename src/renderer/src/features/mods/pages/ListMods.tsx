@@ -158,7 +158,7 @@ function ListMods(): JSX.Element {
 
   return (
     <ScrollableContainer ref={scrollRef}>
-      <div className="w-full min-h-[101%] flex flex-col justify-center gap-2">
+      <div className="w-full min-h-[101%] flex flex-col justify-start gap-2">
         <StickyMenuWrapper scrollRef={scrollRef}>
           <StickyMenuGroupWrapper>
             <StickyMenuGroup>
@@ -206,7 +206,7 @@ function ListMods(): JSX.Element {
           </StickyMenuGroupWrapper>
         </StickyMenuWrapper>
 
-        <ListWrapper className="my-auto">
+        <ListWrapper className="w-full p-0 rounded-none before:rounded-none before:bg-transparent before:backdrop-blur-none before:border-0 before:shadow-none">
           <ListGroup>
             {modsList.length < 1 ? (
               <div className="w-full flex flex-col items-center justify-center gap-2 rounded-sm p-4">
@@ -221,11 +221,11 @@ function ListMods(): JSX.Element {
                     onClick={() => navigate(`/mods/${mod.modid}`)}
                     className="group"
                   >
-                    <div className="flex items-center gap-3 p-2 cursor-pointer">
+                    <div className="flex items-center gap-4 p-4 cursor-pointer">
                       <img
                         src={mod.logo ? `${mod.logo}` : "https://mods.vintagestory.at/web/img/mod-default.png"}
                         alt={mod.name}
-                        className="w-12 h-12 object-cover object-top rounded-sm shrink-0"
+                        className="w-20 h-20 object-cover object-top rounded-sm shrink-0"
                       />
 
                       <div className="flex-1 flex flex-col gap-1 overflow-hidden">
@@ -234,18 +234,18 @@ function ListMods(): JSX.Element {
                             {mod.name}
                           </p>
                           {isInstalled && (
-                            <span className="px-1.5 py-0.5 rounded-sm bg-green-900/30 text-green-300 text-[10px] font-medium shrink-0">
-                              {t("features.mods.installedShort")}
-                            </span>
+                          <span className="px-2 py-0.5 rounded-sm bg-green-900/30 text-green-300 text-xs font-medium shrink-0">
+                            {t("features.mods.installedShort")}
+                          </span>
                           )}
-                          <span className={clsx("px-1.5 py-0.5 rounded-sm text-[10px] font-medium shrink-0", mod.side === "server" && "bg-blue-900/30 text-blue-300", mod.side === "client" && "bg-green-900/30 text-green-300", mod.side === "both" && "bg-purple-900/30 text-purple-300")}>
+                          <span className={clsx("px-2 py-0.5 rounded-sm text-xs font-medium shrink-0", mod.side === "server" && "bg-blue-900/30 text-blue-300", mod.side === "client" && "bg-green-900/30 text-green-300", mod.side === "both" && "bg-purple-900/30 text-purple-300")}>
                             {mod.side}
                           </span>
                         </div>
-                        <p className="text-xs text-zinc-400 overflow-hidden whitespace-nowrap text-ellipsis" title={mod.summary ?? ""}>
+                        <p className="text-sm text-zinc-400 overflow-hidden whitespace-nowrap text-ellipsis" title={mod.summary ?? ""}>
                           {mod.summary}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-zinc-500">
+                        <div className="flex items-center gap-3 text-sm text-zinc-500">
                           <span className="flex items-center gap-1">
                             <PiUserCircleDuotone className="opacity-50" />
                             {mod.author}
@@ -268,7 +268,7 @@ function ListMods(): JSX.Element {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 duration-200">
+                      <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 duration-200">
                         <FormButton
                           title={t("generic.favorite")}
                           onClick={(e) => {
@@ -280,7 +280,7 @@ function ListMods(): JSX.Element {
                             }
                           }}
                           type={config.favMods.some((modid) => modid === mod.modid) ? "warn" : "normal"}
-                          className="w-7 h-7 text-base"
+                          className="w-9 h-9 text-lg"
                         >
                           <PiStarDuotone />
                         </FormButton>
@@ -291,7 +291,7 @@ function ListMods(): JSX.Element {
                             e.stopPropagation()
                             window.api.utils.openOnBrowser(`https://mods.vintagestory.at/show/mod/${mod.assetid}`)
                           }}
-                          className="w-7 h-7 text-base"
+                          className="w-9 h-9 text-lg"
                         >
                           <FiExternalLink />
                         </FormButton>
